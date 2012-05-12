@@ -44,7 +44,11 @@ $(document).ready(function() {
                 $('#screen_name').text(jsonTwitter.screen_name);
                 $('#name').text(jsonTwitter.name);
                 $('#location').text(jsonTwitter.location);
-                $('#description').text(jsonTwitter.description);
+                if (jsonTwitter.description != "") {
+                    $('#description').text(jsonTwitter.description);
+                } else {
+                    $('#description').html('&nbsp;');
+                }
                 $('#followers').text(jsonTwitter.followers_count);
                 $('#following').text(jsonTwitter.friends_count);
                 $('#created').text(jsonTwitter.created_at);
