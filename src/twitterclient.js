@@ -41,7 +41,15 @@ $(document).ready(function() {
         $.jsonp({
             url: url + query,
             success: function(jsonTwitter) {
-                console.log(jsonTwitter);
+                $('#screen_name').text(jsonTwitter.screen_name);
+                $('#name').text(jsonTwitter.name);
+                $('#location').text(jsonTwitter.location);
+                $('#description').text(jsonTwitter.description);
+                $('#followers').text(jsonTwitter.followers_count);
+                $('#following').text(jsonTwitter.friends_count);
+                $('#created').text(jsonTwitter.created_at);
+                $('#tweets').text(jsonTwitter.statuses_count);
+                $('#user_info').removeClass('invisible');
             },
             error: function(d, msg) {
                 console.log("error!");
