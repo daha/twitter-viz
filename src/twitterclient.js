@@ -35,6 +35,8 @@ $(document).ready(function() {
     var url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
         query;
 
+
+
     $('#userSearch').submit(function() {
         $("#twitterResults").html('');
         query = $("#queryString").val();
@@ -43,7 +45,11 @@ $(document).ready(function() {
             success: function(jsonTwitter) {
                 $('#screen_name').text(jsonTwitter.screen_name);
                 $('#name').text(jsonTwitter.name);
-                $('#location').text(jsonTwitter.location);
+                if (jsonTwitter.location != "") {
+                    $('#location').text(jsonTwitter.location);
+                } else {
+                    $('#location').html('&nbsp;');
+                }
                 if (jsonTwitter.description != "") {
                     $('#description').text(jsonTwitter.description);
                 } else {
