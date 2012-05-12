@@ -34,12 +34,18 @@
 $(document).ready(function() {
     var url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
         query;
-    
+
     $('#userSearch').submit(function() {
         $("#twitterResults").html('');
         query = $("#queryString").val();
-        $.getJSON(url + query, function(jsonTwitter) {
-            console.log(jsonTwitter);
+        $.jsonp({
+            url: url + query,
+            success: function(jsonTwitter) {
+                console.log(jsonTwitter);
+            },
+            error: function(d, msg) {
+                console.log("error!");
+            }
         });
         return false;
     });
