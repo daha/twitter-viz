@@ -1,0 +1,3 @@
+[submodule "assets/javascript-bignum"]
+	path = assets/javascript-bignum
+	url = https://github.com/jtobey/javascript-bignum.git
