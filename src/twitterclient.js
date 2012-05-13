@@ -53,11 +53,6 @@ $(document).ready(function () {
         since_id = BigInteger(0),
         twitter_username = '';
 
-    function insertLabeledText(selector, label, text) {
-        if (text !== '') {
-            selector.append('<dt>' + label + '</dt><dd>' + text + '</dd>');
-        }
-    }
 
     function fetch_user_timeline(current_request_number, base_url) {
         var current_url = base_url;
@@ -119,6 +114,12 @@ $(document).ready(function () {
         var current_url = user_timeline_url_base + twitter_username;
         $('#tweets').html('');
         fetch_user_timeline(current_request_number, current_url);        
+    }
+
+    function insertLabeledText(selector, label, text) {
+        if (text !== '') {
+            selector.append('<dt>' + label + '</dt><dd>' + text + '</dd>');
+        }
     }
 
     $('#userSearch').submit(function () {
