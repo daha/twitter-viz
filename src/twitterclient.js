@@ -31,16 +31,25 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
+
+// TODO: Create a new class for the fetching of the user timeline.
+// TODO: Visualize the data with d3.js 
+// TODO: User workers for the calculations
+// TODO: count all hashtags in the tweets
+// TODO: count all the user_mentions in the tweets
 $(document).ready(function() {
     var user_info_url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
-         user_timeline_url = ('https://api.twitter.com/1/statuses/user_timeline.json'
+        user_timeline_url_base = ('https://api.twitter.com/1/statuses/user_timeline.json'
                             + '?callback=?'
-                            + '&count=2'
+                            + '&count=10'
                             + '&trim_user=1'
                             + '&include_entities=1'
                             + '&include_rts=1'
                             + '&contributor_details=t'
                             + '&screen_name='),
+        request_number = 0,
+        tweets = [],
+        max_id = 0, 
         twitter_username = '';
 
     function insertLabeledText(selector, label, text) {
@@ -49,28 +58,64 @@ $(document).ready(function() {
         }
     }
 
-    function fetch_user_tweets(username) {
-        // TODO: handle when the query changes while fetching data for an old query
-        // TODO: add state for max_id & since_id
-        console.log("fetching tweets for " + username);
+    function jsonp(current_request_number, base_url) {
+        console.log("jsonp current_request_number=" + current_request_number);
+        var current_url = base_url;
+       
+       if (max_id != 0) {
+           current_url += '&max_id=' + (max_id - 1);
+       }
+        
         $.jsonp({
-            url: user_timeline_url + username,
+            url: current_url,
             success: function (response) {
-                if (username === twitter_username) {
+                if (current_request_number === request_number) {
+                    console.log("Received " + response.length + " responses, max_id=" + max_id);                    
                     console.log(response);                    
+                    
+                    if (response.length > 0) { // did get new data
+                        tweets = tweets.concat(response);
+                        max_id = response[response.length - 1].id;
+                        jsonp(current_request_number, base_url);
+                    } else {
+                        // TODO: Cache the data in local storage
+                        console.log('No more data to fetch, max_id=' + max_id);
+                        $('#tweets').html('');
+                        $.each(tweets, function (i, tweet){
+                            $('#tweets').append('<p>'+ tweet.text +'</p>');
+                          });
+                    }
                 } else {
-                    console.log("received response from old user's timeline");
+                    console.log('Received response from old search! max_id=' + max_id, current_request_number, request_number);
                 }
             },
             error: function (d, msg) {
-                console.log('failed to fetch user timeline: ' + msg);
+                console.log('Failed to fetch user timeline: ' + msg);
             }
         });
     }
+    
+    function fetch_user_tweets(current_request_number, username) {
+        // TODO: handle when the query changes while fetching data for an old query
+        // TODO: add state for max_id & since_id
+        var current_url = user_timeline_url_base + username;
+        console.log('fetching tweets for ' + username);
+        // TODO: check if the data is in local storage
+        jsonp(current_request_number, current_url);        
+    }
 
     $('#userSearch').submit(function() {
-        $('#twitterResults').html('');
+        var current_request_number;
+        request_number += 1;
+        current_request_number = request_number;
+
+        // Reset the internal state, for the new request
+        tweets = [];
+        max_id = 0; 
         twitter_username = $('#twitter_username_query').val();
+        
+        $('#twitterResults').html('');
+        
         $.jsonp({
             url: user_info_url + twitter_username,
             success: function (response) {
@@ -89,7 +134,7 @@ $(document).ready(function() {
                 $('#user_image').html('<img src="' + response.profile_image_url + '">');
                 $('#user_description').html('<p>' + response.description + '</p>');
 
-                fetch_user_tweets(twitter_username);
+                fetch_user_tweets(current_request_number, twitter_username);
             },
             error: function (d, msg) {
                 console.log('error!');
