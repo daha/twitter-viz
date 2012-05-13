@@ -45,7 +45,7 @@ $(document).ready(function () {
                             + '&trim_user=1'
                             + '&include_entities=1'
                             + '&include_rts=1'
-                            + '&contributor_details=t'
+                            + '&contributor_details=1'
                             + '&screen_name='),
         request_number = 0,
         tweets = [],
@@ -53,7 +53,10 @@ $(document).ready(function () {
         since_id = BigInteger(0),
         twitter_username = '';
 
-
+    function get_local_storage_key(username) {
+        return 'user=' + username.toLowerCase();
+    }
+    
     function fetch_user_timeline(current_request_number, base_url) {
         var current_url = base_url;
 
@@ -73,7 +76,7 @@ $(document).ready(function () {
                             tweets = tweets.concat(response);
                         } else if (max_id.isZero()) { // a response with newer tweets
                             tweets = response.concat(tweets);
-                        } else { // fairly new, need to sort!
+                        } else { // need to sort!
                             tweets = tweets.concat(response);
                             tweets.sort(function (a, b) {
                                 return BigInteger(a.id_str).compare(BigInteger(b.id_str));
@@ -83,8 +86,8 @@ $(document).ready(function () {
                         fetch_user_timeline(current_request_number, base_url);
                     } else {
                         console.log('No more data to fetch, num_tweets=' + tweets.length);
-                        if (tweets.length < 3000) { // The local storage has limited size...
-                            localStorage['user=' + twitter_username] = JSON.stringify(tweets);                            
+                        if (tweets.length < 2500) { // The local storage has limited size...
+                            localStorage[get_local_storage_key(twitter_username)] = JSON.stringify(tweets);                            
                         }
                         $.each(tweets, function (i, tweet) {
                             $('#tweets').append('<p>'+ tweet.text +'</p>');
@@ -101,17 +104,17 @@ $(document).ready(function () {
     }
     
     function fetch_user_tweets(current_request_number) {
-        if (localStorage['user=' + twitter_username]) {
-            tweets = JSON.parse(localStorage['user=' + twitter_username]);
+        var local_storage_key = get_local_storage_key(twitter_username),
+            current_url = user_timeline_url_base + twitter_username;
+        if (localStorage[local_storage_key]) {
+            tweets = JSON.parse(localStorage[local_storage_key]);
             console.log('Found ' + tweets.length + ' tweets in localStorage!');
             if (tweets.length > 0) {
-                // set since_id to only fetch new feeds (not already fetched)
+                // set since_id to only fetch new feeds
                 since_id = BigInteger(tweets[0].id_str);
             }
         }
         
-        // TODO: handle when the query changes while fetching data for an old query
-        var current_url = user_timeline_url_base + twitter_username;
         $('#tweets').html('');
         fetch_user_timeline(current_request_number, current_url);        
     }
