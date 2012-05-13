@@ -53,12 +53,14 @@ $(document).ready(function() {
                 insertTextAtSelector(user_info, 'Screen name', response.screen_name);
                 insertTextAtSelector(user_info, 'Id', response.id);
                 insertTextAtSelector(user_info, 'Location', response.location);
-                insertTextAtSelector(user_info, 'Description', response.description);
                 insertTextAtSelector(user_info, 'Followers', response.followers_count);
                 insertTextAtSelector(user_info, 'Following', response.friends_count);
                 insertTextAtSelector(user_info, 'Favorites', response.favourites_count);
                 insertTextAtSelector(user_info, 'Tweets', response.statuses_count);
                 insertTextAtSelector(user_info, 'Created', response.created_at);
+
+                $('#user_image').html('<img src="' + response.profile_image_url + '">');
+                $('#user_description').html('<p>' + response.description + '</p>');
             },
             error: function(d, msg) {
                 console.log('error!');
