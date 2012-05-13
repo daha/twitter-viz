@@ -49,7 +49,8 @@ $(document).ready(function() {
                             + '&screen_name='),
         request_number = 0,
         tweets = [],
-        max_id = 0, 
+        max_id = BigInteger(0),
+        since_id = BigInteger(0),
         twitter_username = '';
 
     function insertLabeledText(selector, label, text) {
@@ -59,31 +60,53 @@ $(document).ready(function() {
     }
 
     function jsonp(current_request_number, base_url) {
-        console.log("jsonp current_request_number=" + current_request_number);
         var current_url = base_url;
-       
-       if (max_id != 0) {
-           current_url += '&max_id=' + (max_id - 1);
-       }
+        
+        console.log("jsonp");
+        console.log(current_request_number, max_id.toString(), since_id.toString());
+
+        if (!max_id.isZero()) {
+            current_url += '&max_id=' + max_id.prev();
+        }
+        if (!since_id.isZero()) { 
+            current_url += "&since_id=" + since_id.next();
+        }
+        console.log(current_url);
         
         $.jsonp({
             url: current_url,
             success: function (response) {
                 if (current_request_number === request_number) {
-                    console.log("Received " + response.length + " responses, max_id=" + max_id);                    
+                    console.log("Received " + response.length + " responses, max_id=" + max_id + ", since_id=" + since_id);                    
                     console.log(response);                    
-                    
+
                     if (response.length > 0) { // did get new data
-                        tweets = tweets.concat(response);
-                        max_id = response[response.length - 1].id;
+                        if (since_id.isZero()) { // a response with older tweets 
+                            tweets = tweets.concat(response);
+                        } else if (max_id.isZero()) { // a response with newer tweets
+                            tweets = response.concat(tweets);
+                        } else { // fairly new, need to sort!
+                            tweets = tweets.concat(response);
+                            tweets.sort(function (a, b) {
+                                return BigInteger(a.id_str).compare(BigInteger(b.id_str));
+                            });
+                        }
+                        max_id = BigInteger(response[response.length - 1].id_str); // The oldest is last
                         jsonp(current_request_number, base_url);
                     } else {
-                        // TODO: Cache the data in local storage
-                        console.log('No more data to fetch, max_id=' + max_id);
-                        $('#tweets').html('');
-                        $.each(tweets, function (i, tweet){
-                            $('#tweets').append('<p>'+ tweet.text +'</p>');
-                          });
+                        if (since_id.isZero() && tweets.length > 0) {
+                            // fetch the newest tweets (created while fetching the old ones).
+                            since_id = BigInteger(tweets[0].id_str); // The most recent is first
+                            max_id = BigInteger(0);
+                            jsonp(current_request_number, base_url);
+                        } else {
+                            // TODO: Cache the data in local storage
+                            console.log('No more data to fetch, max_id=' + max_id);
+                            $('#tweets').html('');
+                            $.each(tweets, function (i, tweet){
+                                $('#tweets').append('<p>'+ tweet.text +'</p>');
+                            });
+                        } 
                     }
                 } else {
                     console.log('Received response from old search! max_id=' + max_id, current_request_number, request_number);
@@ -97,7 +120,6 @@ $(document).ready(function() {
     
     function fetch_user_tweets(current_request_number, username) {
         // TODO: handle when the query changes while fetching data for an old query
-        // TODO: add state for max_id & since_id
         var current_url = user_timeline_url_base + username;
         console.log('fetching tweets for ' + username);
         // TODO: check if the data is in local storage
@@ -111,7 +133,8 @@ $(document).ready(function() {
 
         // Reset the internal state, for the new request
         tweets = [];
-        max_id = 0; 
+        max_id = BigInteger(0); 
+        since_id = BigInteger(0);
         twitter_username = $('#twitter_username_query').val();
         
         $('#twitterResults').html('');
