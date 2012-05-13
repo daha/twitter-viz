@@ -33,7 +33,7 @@
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // TODO: Create a new class for the fetching of the user timeline.
-// TODO: Visualize the data with d3.js 
+// TODO: Visualize the data with d3.js
 // TODO: User workers for the calculations
 // TODO: count all hashtags in the tweets
 // TODO: count all the user_mentions in the tweets
@@ -56,23 +56,23 @@ $(document).ready(function () {
     function get_local_storage_key(username) {
         return 'user=' + username.toLowerCase();
     }
-    
+
     function fetch_user_timeline(current_request_number, base_url) {
         var current_url = base_url;
 
         if (!max_id.isZero()) {
             current_url += '&max_id=' + max_id.prev().toString();
         }
-        if (!since_id.isZero()) { 
+        if (!since_id.isZero()) {
             current_url += "&since_id=" + since_id.next().toString();
         }
-        
+
         $.jsonp({
             url: current_url,
             success: function (response) {
                 if (current_request_number === request_number) {
                     if (response.length > 0) { // did get new data
-                        if (since_id.isZero()) { // a response with older tweets 
+                        if (since_id.isZero()) { // a response with older tweets
                             tweets = tweets.concat(response);
                         } else if (max_id.isZero()) { // a response with newer tweets
                             tweets = response.concat(tweets);
@@ -87,7 +87,7 @@ $(document).ready(function () {
                     } else {
                         console.log('No more data to fetch, num_tweets=' + tweets.length);
                         if (tweets.length < 2500) { // The local storage has limited size...
-                            localStorage[get_local_storage_key(twitter_username)] = JSON.stringify(tweets);                            
+                            localStorage[get_local_storage_key(twitter_username)] = JSON.stringify(tweets);
                         }
                         $.each(tweets, function (i, tweet) {
                             $('#tweets').append('<p>'+ tweet.text +'</p>');
@@ -102,7 +102,7 @@ $(document).ready(function () {
             }
         });
     }
-    
+
     function fetch_user_tweets(current_request_number) {
         var local_storage_key = get_local_storage_key(twitter_username),
             current_url = user_timeline_url_base + twitter_username;
@@ -114,9 +114,9 @@ $(document).ready(function () {
                 since_id = BigInteger(tweets[0].id_str);
             }
         }
-        
+
         $('#tweets').html('');
-        fetch_user_timeline(current_request_number, current_url);        
+        fetch_user_timeline(current_request_number, current_url);
     }
 
     function insertLabeledText(selector, label, text) {
@@ -132,12 +132,12 @@ $(document).ready(function () {
 
         // Reset the internal state, for the new request
         tweets = [];
-        max_id = BigInteger(0); 
+        max_id = BigInteger(0);
         since_id = BigInteger(0);
         twitter_username = $('#twitter_username_query').val().toLowerCase();
-        
+
         $('#twitterResults').html('');
-        
+
         $.jsonp({
             url: user_info_url + twitter_username,
             success: function (response) {
