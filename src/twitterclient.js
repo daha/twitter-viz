@@ -92,22 +92,12 @@ $(document).ready(function() {
                         max_id = BigInteger(response[response.length - 1].id_str); // The oldest is last
                         jsonp(current_request_number, base_url);
                     } else {
-                        // TODO: make it note get the newest when doing a initial fetch, 
-                        //       add a flag to fetch newer tweets instead
-                        if (since_id.isZero() && tweets.length > 0) {
-                            // fetch the newest tweets (created while fetching the old ones).
-                            since_id = BigInteger(tweets[0].id_str); // The most recent is first
-                            max_id = BigInteger(0);
-                            jsonp(current_request_number, base_url);
-                        } else {
-                            localStorage['user=' + twitter_username] = JSON.stringify(tweets);
-                            
-                            console.log('No more data to fetch, num_tweets=' + tweets.length);
-                            $('#tweets').html('');
-                            $.each(tweets, function (i, tweet){
-                                $('#tweets').append('<p>'+ tweet.text +'</p>');
-                            });
-                        } 
+                        console.log('No more data to fetch, num_tweets=' + tweets.length);
+                        localStorage['user=' + twitter_username] = JSON.stringify(tweets);
+
+                        $.each(tweets, function (i, tweet){
+                            $('#tweets').append('<p>'+ tweet.text +'</p>');
+                        });
                     }
                 } else {
                     console.log('Received response from old search! max_id=' + max_id.toString(), current_request_number, request_number);
@@ -120,6 +110,7 @@ $(document).ready(function() {
     }
     
     function fetch_user_tweets(current_request_number) {
+        console.log('Fetching tweets for ' + twitter_username);
         if (localStorage['user=' + twitter_username]) {
             tweets = JSON.parse(localStorage['user=' + twitter_username]);
             console.log('Found ' + tweets.length + ' tweets in localStorage!');
@@ -131,7 +122,7 @@ $(document).ready(function() {
         
         // TODO: handle when the query changes while fetching data for an old query
         var current_url = user_timeline_url_base + twitter_username;
-        console.log('fetching tweets for ' + twitter_username);
+        $('#tweets').html('');
         jsonp(current_request_number, current_url);        
     }
 
