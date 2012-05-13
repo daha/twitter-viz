@@ -37,7 +37,7 @@
 // TODO: User workers for the calculations
 // TODO: count all hashtags in the tweets
 // TODO: count all the user_mentions in the tweets
-$(document).ready(function() {
+$(document).ready(function () {
     var user_info_url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
         user_timeline_url_base = ('https://api.twitter.com/1/statuses/user_timeline.json'
                             + '?callback=?'
@@ -59,9 +59,8 @@ $(document).ready(function() {
         }
     }
 
-    function jsonp(current_request_number, base_url) {
+    function fetch_user_timeline(current_request_number, base_url) {
         var current_url = base_url;
-        console.log("jsonp", current_request_number, max_id.toString(), since_id.toString());
 
         if (!max_id.isZero()) {
             current_url += '&max_id=' + max_id.prev().toString();
@@ -69,15 +68,11 @@ $(document).ready(function() {
         if (!since_id.isZero()) { 
             current_url += "&since_id=" + since_id.next().toString();
         }
-        console.log(current_url);
         
         $.jsonp({
             url: current_url,
             success: function (response) {
                 if (current_request_number === request_number) {
-                    console.log("Received " + response.length + " responses, max_id=" + max_id.toString() + ", since_id=" + since_id.toString());                    
-                    console.log(response);                    
-
                     if (response.length > 0) { // did get new data
                         if (since_id.isZero()) { // a response with older tweets 
                             tweets = tweets.concat(response);
@@ -90,17 +85,18 @@ $(document).ready(function() {
                             });
                         }
                         max_id = BigInteger(response[response.length - 1].id_str); // The oldest is last
-                        jsonp(current_request_number, base_url);
+                        fetch_user_timeline(current_request_number, base_url);
                     } else {
                         console.log('No more data to fetch, num_tweets=' + tweets.length);
-                        localStorage['user=' + twitter_username] = JSON.stringify(tweets);
-
-                        $.each(tweets, function (i, tweet){
+                        if (tweets.length < 3000) { // The local storage has limited size...
+                            localStorage['user=' + twitter_username] = JSON.stringify(tweets);                            
+                        }
+                        $.each(tweets, function (i, tweet) {
                             $('#tweets').append('<p>'+ tweet.text +'</p>');
                         });
                     }
                 } else {
-                    console.log('Received response from old search! max_id=' + max_id.toString(), current_request_number, request_number);
+                    console.log('Received response from old search!', current_request_number, request_number);
                 }
             },
             error: function (d, msg) {
@@ -110,7 +106,6 @@ $(document).ready(function() {
     }
     
     function fetch_user_tweets(current_request_number) {
-        console.log('Fetching tweets for ' + twitter_username);
         if (localStorage['user=' + twitter_username]) {
             tweets = JSON.parse(localStorage['user=' + twitter_username]);
             console.log('Found ' + tweets.length + ' tweets in localStorage!');
@@ -123,10 +118,10 @@ $(document).ready(function() {
         // TODO: handle when the query changes while fetching data for an old query
         var current_url = user_timeline_url_base + twitter_username;
         $('#tweets').html('');
-        jsonp(current_request_number, current_url);        
+        fetch_user_timeline(current_request_number, current_url);        
     }
 
-    $('#userSearch').submit(function() {
+    $('#userSearch').submit(function () {
         var current_request_number;
         request_number += 1;
         current_request_number = request_number;
