@@ -41,7 +41,7 @@ $(document).ready(function() {
     var user_info_url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
         user_timeline_url_base = ('https://api.twitter.com/1/statuses/user_timeline.json'
                             + '?callback=?'
-                            + '&count=10'
+                            + '&count=100'
                             + '&trim_user=1'
                             + '&include_entities=1'
                             + '&include_rts=1'
@@ -61,15 +61,13 @@ $(document).ready(function() {
 
     function jsonp(current_request_number, base_url) {
         var current_url = base_url;
-        
-        console.log("jsonp");
-        console.log(current_request_number, max_id.toString(), since_id.toString());
+        console.log("jsonp", current_request_number, max_id.toString(), since_id.toString());
 
         if (!max_id.isZero()) {
-            current_url += '&max_id=' + max_id.prev();
+            current_url += '&max_id=' + max_id.prev().toString();
         }
         if (!since_id.isZero()) { 
-            current_url += "&since_id=" + since_id.next();
+            current_url += "&since_id=" + since_id.next().toString();
         }
         console.log(current_url);
         
@@ -77,7 +75,7 @@ $(document).ready(function() {
             url: current_url,
             success: function (response) {
                 if (current_request_number === request_number) {
-                    console.log("Received " + response.length + " responses, max_id=" + max_id + ", since_id=" + since_id);                    
+                    console.log("Received " + response.length + " responses, max_id=" + max_id.toString() + ", since_id=" + since_id.toString());                    
                     console.log(response);                    
 
                     if (response.length > 0) { // did get new data
@@ -94,14 +92,17 @@ $(document).ready(function() {
                         max_id = BigInteger(response[response.length - 1].id_str); // The oldest is last
                         jsonp(current_request_number, base_url);
                     } else {
+                        // TODO: make it note get the newest when doing a initial fetch, 
+                        //       add a flag to fetch newer tweets instead
                         if (since_id.isZero() && tweets.length > 0) {
                             // fetch the newest tweets (created while fetching the old ones).
                             since_id = BigInteger(tweets[0].id_str); // The most recent is first
                             max_id = BigInteger(0);
                             jsonp(current_request_number, base_url);
                         } else {
-                            // TODO: Cache the data in local storage
-                            console.log('No more data to fetch, max_id=' + max_id);
+                            localStorage['user=' + twitter_username] = JSON.stringify(tweets);
+                            
+                            console.log('No more data to fetch, num_tweets=' + tweets.length);
                             $('#tweets').html('');
                             $.each(tweets, function (i, tweet){
                                 $('#tweets').append('<p>'+ tweet.text +'</p>');
@@ -109,7 +110,7 @@ $(document).ready(function() {
                         } 
                     }
                 } else {
-                    console.log('Received response from old search! max_id=' + max_id, current_request_number, request_number);
+                    console.log('Received response from old search! max_id=' + max_id.toString(), current_request_number, request_number);
                 }
             },
             error: function (d, msg) {
@@ -118,11 +119,19 @@ $(document).ready(function() {
         });
     }
     
-    function fetch_user_tweets(current_request_number, username) {
+    function fetch_user_tweets(current_request_number) {
+        if (localStorage['user=' + twitter_username]) {
+            tweets = JSON.parse(localStorage['user=' + twitter_username]);
+            console.log('Found ' + tweets.length + ' tweets in localStorage!');
+            if (tweets.length > 0) {
+                // set since_id to only fetch new feeds (not already fetched)
+                since_id = BigInteger(tweets[0].id_str);
+            }
+        }
+        
         // TODO: handle when the query changes while fetching data for an old query
-        var current_url = user_timeline_url_base + username;
-        console.log('fetching tweets for ' + username);
-        // TODO: check if the data is in local storage
+        var current_url = user_timeline_url_base + twitter_username;
+        console.log('fetching tweets for ' + twitter_username);
         jsonp(current_request_number, current_url);        
     }
 
@@ -157,7 +166,7 @@ $(document).ready(function() {
                 $('#user_image').html('<img src="' + response.profile_image_url + '">');
                 $('#user_description').html('<p>' + response.description + '</p>');
 
-                fetch_user_tweets(current_request_number, twitter_username);
+                fetch_user_tweets(current_request_number);
             },
             error: function (d, msg) {
                 console.log('error!');
