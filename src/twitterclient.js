@@ -33,7 +33,7 @@
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 $(document).ready(function() {
     var url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
-        query;
+        twitter_username;
 
     function insertLabeledText(selector, label, text) {
         if (text !== '') {
@@ -43,9 +43,9 @@ $(document).ready(function() {
 
     $('#userSearch').submit(function() {
         $('#twitterResults').html('');
-        query = $('#queryString').val();
+        twitter_username = $('#twitter_username_query').val();
         $.jsonp({
-            url: url + query,
+            url: url + twitter_username,
             success: function(response) {
                 user_info = $('#user_info');
                 user_info.html('');
