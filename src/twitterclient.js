@@ -130,7 +130,7 @@ $(document).ready(function () {
         tweets = [];
         max_id = BigInteger(0); 
         since_id = BigInteger(0);
-        twitter_username = $('#twitter_username_query').val();
+        twitter_username = $('#twitter_username_query').val().toLowerCase();
         
         $('#twitterResults').html('');
         
