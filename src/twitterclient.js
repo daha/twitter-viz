@@ -35,34 +35,35 @@ $(document).ready(function() {
     var url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
         query;
 
-
+    function insertTextAtSelector (text, selector, label) {
+        if (text !== '') {
+            $(selector).text(text);
+        } else {
+            $(selector).html('&nbsp;');
+        }
+    }
 
     $('#userSearch').submit(function() {
-        $("#twitterResults").html('');
-        query = $("#queryString").val();
+        $('#twitterResults').html('');
+        query = $('#queryString').val();
         $.jsonp({
             url: url + query,
             success: function(jsonTwitter) {
-                $('#screen_name').text(jsonTwitter.screen_name);
-                $('#name').text(jsonTwitter.name);
-                if (jsonTwitter.location != "") {
-                    $('#location').text(jsonTwitter.location);
-                } else {
-                    $('#location').html('&nbsp;');
-                }
-                if (jsonTwitter.description != "") {
-                    $('#description').text(jsonTwitter.description);
-                } else {
-                    $('#description').html('&nbsp;');
-                }
-                $('#followers').text(jsonTwitter.followers_count);
-                $('#following').text(jsonTwitter.friends_count);
-                $('#created').text(jsonTwitter.created_at);
-                $('#tweets').text(jsonTwitter.statuses_count);
+                insertTextAtSelector(jsonTwitter.name, '#twitter_name');
+                insertTextAtSelector(jsonTwitter.screen_name, '#screen_name');
+                insertTextAtSelector(jsonTwitter.id, '#twitter_id');
+                insertTextAtSelector(jsonTwitter.location, '#location');
+                insertTextAtSelector(jsonTwitter.description, '#description');
+                insertTextAtSelector(jsonTwitter.followers_count, '#followers');
+                insertTextAtSelector(jsonTwitter.friends_count, '#following');
+                insertTextAtSelector(jsonTwitter.favourites_count, '#favorites');
+                insertTextAtSelector(jsonTwitter.statuses_count, '#tweets');
+                insertTextAtSelector(jsonTwitter.created_at, '#created');
+
                 $('#user_info').removeClass('invisible');
             },
             error: function(d, msg) {
-                console.log("error!");
+                console.log('error!');
             }
         });
         return false;
