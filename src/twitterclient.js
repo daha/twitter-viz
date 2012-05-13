@@ -140,7 +140,7 @@ $(document).ready(function () {
                 user_info = $('#user_info');
                 user_info.html('');
                 insertLabeledText(user_info, 'Name', response.name);
-                insertLabeledText(user_info, 'Screen name', response.screen_name);
+                insertLabeledText(user_info, 'Screen name', '@' + response.screen_name);
                 insertLabeledText(user_info, 'Id', response.id);
                 insertLabeledText(user_info, 'Location', response.location);
                 insertLabeledText(user_info, 'Followers', response.followers_count);
