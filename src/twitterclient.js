@@ -32,8 +32,16 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 $(document).ready(function() {
-    var url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
-        twitter_username;
+    var user_info_url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
+         user_timeline_url = ('https://api.twitter.com/1/statuses/user_timeline.json'
+                            + '?callback=?'
+                            + '&count=2'
+                            + '&trim_user=1'
+                            + '&include_entities=1'
+                            + '&include_rts=1'
+                            + '&contributor_details=t'
+                            + '&screen_name='),
+        twitter_username = '';
 
     function insertLabeledText(selector, label, text) {
         if (text !== '') {
@@ -41,12 +49,31 @@ $(document).ready(function() {
         }
     }
 
+    function fetch_user_tweets(username) {
+        // TODO: handle when the query changes while fetching data for an old query
+        // TODO: add state for max_id & since_id
+        console.log("fetching tweets for " + username);
+        $.jsonp({
+            url: user_timeline_url + username,
+            success: function (response) {
+                if (username === twitter_username) {
+                    console.log(response);                    
+                } else {
+                    console.log("received response from old user's timeline");
+                }
+            },
+            error: function (d, msg) {
+                console.log('failed to fetch user timeline: ' + msg);
+            }
+        });
+    }
+
     $('#userSearch').submit(function() {
         $('#twitterResults').html('');
         twitter_username = $('#twitter_username_query').val();
         $.jsonp({
-            url: url + twitter_username,
-            success: function(response) {
+            url: user_info_url + twitter_username,
+            success: function (response) {
                 user_info = $('#user_info');
                 user_info.html('');
                 insertLabeledText(user_info, 'Name', response.name);
@@ -61,8 +88,10 @@ $(document).ready(function() {
 
                 $('#user_image').html('<img src="' + response.profile_image_url + '">');
                 $('#user_description').html('<p>' + response.description + '</p>');
+
+                fetch_user_tweets(twitter_username);
             },
-            error: function(d, msg) {
+            error: function (d, msg) {
                 console.log('error!');
             }
         });
