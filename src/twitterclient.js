@@ -60,6 +60,7 @@ $(document).ready(function () {
     function fetch_user_timeline(current_request_number, base_url) {
         var current_url = base_url;
 
+        // https://dev.twitter.com/docs/working-with-timelines
         if (!max_id.isZero()) {
             current_url += '&max_id=' + max_id.prev().toString();
         }
