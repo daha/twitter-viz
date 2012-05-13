@@ -35,11 +35,9 @@ $(document).ready(function() {
     var url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
         query;
 
-    function insertTextAtSelector (text, selector, label) {
+    function insertTextAtSelector (selector, label, text) {
         if (text !== '') {
-            $(selector).text(text);
-        } else {
-            $(selector).html('&nbsp;');
+            selector.append('<dt>' + label + '</dt><dd>' + text + '</dd>');
         }
     }
 
@@ -48,19 +46,19 @@ $(document).ready(function() {
         query = $('#queryString').val();
         $.jsonp({
             url: url + query,
-            success: function(jsonTwitter) {
-                insertTextAtSelector(jsonTwitter.name, '#twitter_name');
-                insertTextAtSelector(jsonTwitter.screen_name, '#screen_name');
-                insertTextAtSelector(jsonTwitter.id, '#twitter_id');
-                insertTextAtSelector(jsonTwitter.location, '#location');
-                insertTextAtSelector(jsonTwitter.description, '#description');
-                insertTextAtSelector(jsonTwitter.followers_count, '#followers');
-                insertTextAtSelector(jsonTwitter.friends_count, '#following');
-                insertTextAtSelector(jsonTwitter.favourites_count, '#favorites');
-                insertTextAtSelector(jsonTwitter.statuses_count, '#tweets');
-                insertTextAtSelector(jsonTwitter.created_at, '#created');
-
-                $('#user_info').removeClass('invisible');
+            success: function(response) {
+                user_info = $('#user_info');
+                user_info.html('');
+                insertTextAtSelector(user_info, 'Name', response.name);
+                insertTextAtSelector(user_info, 'Screen name', response.screen_name);
+                insertTextAtSelector(user_info, 'Id', response.id);
+                insertTextAtSelector(user_info, 'Location', response.location);
+                insertTextAtSelector(user_info, 'Description', response.description);
+                insertTextAtSelector(user_info, 'Followers', response.followers_count);
+                insertTextAtSelector(user_info, 'Following', response.friends_count);
+                insertTextAtSelector(user_info, 'Favorites', response.favourites_count);
+                insertTextAtSelector(user_info, 'Tweets', response.statuses_count);
+                insertTextAtSelector(user_info, 'Created', response.created_at);
             },
             error: function(d, msg) {
                 console.log('error!');
