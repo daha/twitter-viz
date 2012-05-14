@@ -32,6 +32,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
+/*globals $,document,BigInteger,localStorage */
 // TODO: Create a new class for the fetching of the user timeline.
 // TODO: Visualize the data with d3.js
 // TODO: User workers for the calculations
@@ -60,14 +61,14 @@ $(document).ready(function () {
     function saveTweetsToLocalStorage() {
         try {
             localStorage[getLocalStorageKey(twitterUsername)] = JSON.stringify(tweets);
-        } catch(e) {
+        } catch (e) {
             console.log("Local storage is full, failed to store tweets for " + twitterUsername);
         }
     }
 
     function addTweetsToTag(tag) {
         $.each(tweets, function (i, tweet) {
-            $(tag).append('<p>'+ tweet.text +'</p>');
+            $(tag).append('<p>' + tweet.text + '</p>');
         });
     }
 
@@ -87,8 +88,12 @@ $(document).ready(function () {
         return result;
     }
 
+    function error(d, msg) {
+        console.log('Failed to fetch user timeline: ' + msg);
+    }
+
     function makeSuccessFunction(currentRequestNumber, baseUrl) {
-        return (function (response) {
+        return function (response) {
             if (currentRequestNumber === requestNumber) {
                 if (response.length > 0) { // did get new data
                     if (sinceId.isZero()) { // a response with older tweets
@@ -110,11 +115,7 @@ $(document).ready(function () {
             } else {
                 console.log('Received response from old search!', currentRequestNumber, requestNumber);
             }
-        });
-    }
-
-    function error(d, msg) {
-        console.log('Failed to fetch user timeline: ' + msg);
+        };
     }
 
     function makeRequest(currentRequestNumber, baseUrl, requestUrl) {
@@ -157,7 +158,7 @@ $(document).ready(function () {
     }
 
     $('#userSearch').submit(function () {
-        var currentRequestNumber;
+        var currentRequestNumber, userInfo;
         requestNumber += 1;
         currentRequestNumber = requestNumber;
 
