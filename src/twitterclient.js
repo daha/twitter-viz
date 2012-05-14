@@ -53,59 +53,89 @@ $(document).ready(function () {
         since_id = BigInteger(0),
         twitter_username = '';
 
-    function get_local_storage_key(username) {
+    function getLocalStorageKey(username) {
         return 'user=' + username.toLowerCase();
     }
 
-    function fetch_user_timeline(current_request_number, base_url) {
-        var current_url = base_url;
+    function saveTweetsToLocalStorage() {
+        try {
+            localStorage[getLocalStorageKey(twitter_username)] = JSON.stringify(tweets);
+        } catch(e) {
+            console.log("Local storage is full, failed to store tweets for " + twitter_username);
+        }
+    }
 
-        // https://dev.twitter.com/docs/working-with-timelines
+    function addTweetsToTag(tag) {
+        $.each(tweets, function (i, tweet) {
+            $(tag).append('<p>'+ tweet.text +'</p>');
+        });
+    }
+
+    function addMaxIdIfPresent(current_url) {
+        var result = current_url;
         if (!max_id.isZero()) {
-            current_url += '&max_id=' + max_id.prev().toString();
+            result += '&max_id=' + max_id.prev().toString();
         }
-        if (!since_id.isZero()) {
-            current_url += "&since_id=" + since_id.next().toString();
-        }
+        return result;
+    }
 
-        $.jsonp({
-            url: current_url,
-            success: function (response) {
-                if (current_request_number === request_number) {
-                    if (response.length > 0) { // did get new data
-                        if (since_id.isZero()) { // a response with older tweets
-                            tweets = tweets.concat(response);
-                        } else if (max_id.isZero()) { // a response with newer tweets
-                            tweets = response.concat(tweets);
-                        } else { // need to sort!
-                            tweets = tweets.concat(response);
-                            tweets.sort(function (a, b) {
-                                return BigInteger(a.id_str).compare(BigInteger(b.id_str));
-                            });
-                        }
-                        max_id = BigInteger(response[response.length - 1].id_str); // The oldest is last
-                        fetch_user_timeline(current_request_number, base_url);
-                    } else {
-                        console.log('No more data to fetch, num_tweets=' + tweets.length);
-                        if (tweets.length < 2500) { // The local storage has limited size...
-                            localStorage[get_local_storage_key(twitter_username)] = JSON.stringify(tweets);
-                        }
-                        $.each(tweets, function (i, tweet) {
-                            $('#tweets').append('<p>'+ tweet.text +'</p>');
+    function addSinceIdIfPresent(current_url) {
+        var result = current_url;
+        if (!since_id.isZero()) {
+            result += "&since_id=" + since_id.next().toString();
+        }
+        return result;
+    }
+
+    function makeSuccessFunction(current_request_number, base_url) {
+        return (function (response) {
+            if (current_request_number === request_number) {
+                if (response.length > 0) { // did get new data
+                    if (since_id.isZero()) { // a response with older tweets
+                        tweets = tweets.concat(response);
+                    } else if (max_id.isZero()) { // a response with newer tweets
+                        tweets = response.concat(tweets);
+                    } else { // need to sort!
+                        tweets = tweets.concat(response);
+                        tweets.sort(function (a, b) {
+                            return BigInteger(a.id_str).compare(BigInteger(b.id_str));
                         });
                     }
+                    max_id = BigInteger(response[response.length - 1].id_str); // The oldest is last
+                    fetchUserTimeline(current_request_number, base_url);
                 } else {
-                    console.log('Received response from old search!', current_request_number, request_number);
+                    saveTweetsToLocalStorage();
+                    addTweetsToTag('#tweets');
                 }
-            },
-            error: function (d, msg) {
-                console.log('Failed to fetch user timeline: ' + msg);
+            } else {
+                console.log('Received response from old search!', current_request_number, request_number);
             }
         });
     }
 
-    function fetch_user_tweets(current_request_number) {
-        var local_storage_key = get_local_storage_key(twitter_username),
+    function error(d, msg) {
+        console.log('Failed to fetch user timeline: ' + msg);
+    }
+
+    function makeRequest(current_request_number, base_url, request_url) {
+        $.jsonp({
+            url: request_url,
+            success: makeSuccessFunction(current_request_number, base_url),
+            error: error
+        });
+    }
+
+    function fetchUserTimeline(current_request_number, base_url) {
+        var current_url = base_url;
+
+        // https://dev.twitter.com/docs/working-with-timelines
+        current_url = addMaxIdIfPresent(current_url);
+        current_url = addSinceIdIfPresent(current_url);
+        makeRequest(current_request_number, base_url, current_url);
+    }
+
+    function fetchUserTweets(current_request_number) {
+        var local_storage_key = getLocalStorageKey(twitter_username),
             current_url = user_timeline_url_base + twitter_username;
         if (localStorage[local_storage_key]) {
             tweets = JSON.parse(localStorage[local_storage_key]);
@@ -117,7 +147,7 @@ $(document).ready(function () {
         }
 
         $('#tweets').html('');
-        fetch_user_timeline(current_request_number, current_url);
+        fetchUserTimeline(current_request_number, current_url);
     }
 
     function insertLabeledText(selector, label, text) {
@@ -157,7 +187,7 @@ $(document).ready(function () {
                 $('#user_image').html('<img src="' + response.profile_image_url + '">');
                 $('#user_description').html('<p>' + response.description + '</p>');
 
-                fetch_user_tweets(current_request_number);
+                fetchUserTweets(current_request_number);
             },
             error: function (d, msg) {
                 console.log('error!');
