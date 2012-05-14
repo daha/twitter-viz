@@ -38,8 +38,8 @@
 // TODO: count all hashtags in the tweets
 // TODO: count all the user_mentions in the tweets
 $(document).ready(function () {
-    var user_info_url = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
-        user_timeline_url_base = ('https://api.twitter.com/1/statuses/user_timeline.json'
+    var userInfoUrl = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
+        userTimelineUrlBase = ('https://api.twitter.com/1/statuses/user_timeline.json'
                             + '?callback=?'
                             + '&count=100'
                             + '&trim_user=1'
@@ -47,11 +47,11 @@ $(document).ready(function () {
                             + '&include_rts=1'
                             + '&contributor_details=1'
                             + '&screen_name='),
-        request_number = 0,
+        requestNumber = 0,
         tweets = [],
-        max_id = BigInteger(0),
-        since_id = BigInteger(0),
-        twitter_username = '';
+        maxId = BigInteger(0),
+        sinceId = BigInteger(0),
+        twitterUsername = '';
 
     function getLocalStorageKey(username) {
         return 'user=' + username.toLowerCase();
@@ -59,9 +59,9 @@ $(document).ready(function () {
 
     function saveTweetsToLocalStorage() {
         try {
-            localStorage[getLocalStorageKey(twitter_username)] = JSON.stringify(tweets);
+            localStorage[getLocalStorageKey(twitterUsername)] = JSON.stringify(tweets);
         } catch(e) {
-            console.log("Local storage is full, failed to store tweets for " + twitter_username);
+            console.log("Local storage is full, failed to store tweets for " + twitterUsername);
         }
     }
 
@@ -71,29 +71,29 @@ $(document).ready(function () {
         });
     }
 
-    function addMaxIdIfPresent(current_url) {
-        var result = current_url;
-        if (!max_id.isZero()) {
-            result += '&max_id=' + max_id.prev().toString();
+    function addMaxIdIfPresent(currentUrl) {
+        var result = currentUrl;
+        if (!maxId.isZero()) {
+            result += '&max_id=' + maxId.prev().toString();
         }
         return result;
     }
 
-    function addSinceIdIfPresent(current_url) {
-        var result = current_url;
-        if (!since_id.isZero()) {
-            result += "&since_id=" + since_id.next().toString();
+    function addSinceIdIfPresent(currentUrl) {
+        var result = currentUrl;
+        if (!sinceId.isZero()) {
+            result += "&since_id=" + sinceId.next().toString();
         }
         return result;
     }
 
-    function makeSuccessFunction(current_request_number, base_url) {
+    function makeSuccessFunction(currentRequestNumber, baseUrl) {
         return (function (response) {
-            if (current_request_number === request_number) {
+            if (currentRequestNumber === requestNumber) {
                 if (response.length > 0) { // did get new data
-                    if (since_id.isZero()) { // a response with older tweets
+                    if (sinceId.isZero()) { // a response with older tweets
                         tweets = tweets.concat(response);
-                    } else if (max_id.isZero()) { // a response with newer tweets
+                    } else if (maxId.isZero()) { // a response with newer tweets
                         tweets = response.concat(tweets);
                     } else { // need to sort!
                         tweets = tweets.concat(response);
@@ -101,14 +101,14 @@ $(document).ready(function () {
                             return BigInteger(a.id_str).compare(BigInteger(b.id_str));
                         });
                     }
-                    max_id = BigInteger(response[response.length - 1].id_str); // The oldest is last
-                    fetchUserTimeline(current_request_number, base_url);
+                    maxId = BigInteger(response[response.length - 1].id_str); // The oldest is last
+                    fetchUserTimeline(currentRequestNumber, baseUrl);
                 } else {
                     saveTweetsToLocalStorage();
                     addTweetsToTag('#tweets');
                 }
             } else {
-                console.log('Received response from old search!', current_request_number, request_number);
+                console.log('Received response from old search!', currentRequestNumber, requestNumber);
             }
         });
     }
@@ -117,37 +117,37 @@ $(document).ready(function () {
         console.log('Failed to fetch user timeline: ' + msg);
     }
 
-    function makeRequest(current_request_number, base_url, request_url) {
+    function makeRequest(currentRequestNumber, baseUrl, requestUrl) {
         $.jsonp({
-            url: request_url,
-            success: makeSuccessFunction(current_request_number, base_url),
+            url: requestUrl,
+            success: makeSuccessFunction(currentRequestNumber, baseUrl),
             error: error
         });
     }
 
-    function fetchUserTimeline(current_request_number, base_url) {
-        var current_url = base_url;
+    function fetchUserTimeline(currentRequestNumber, baseUrl) {
+        var currentUrl = baseUrl;
 
         // https://dev.twitter.com/docs/working-with-timelines
-        current_url = addMaxIdIfPresent(current_url);
-        current_url = addSinceIdIfPresent(current_url);
-        makeRequest(current_request_number, base_url, current_url);
+        currentUrl = addMaxIdIfPresent(currentUrl);
+        currentUrl = addSinceIdIfPresent(currentUrl);
+        makeRequest(currentRequestNumber, baseUrl, currentUrl);
     }
 
-    function fetchUserTweets(current_request_number) {
-        var local_storage_key = getLocalStorageKey(twitter_username),
-            current_url = user_timeline_url_base + twitter_username;
-        if (localStorage[local_storage_key]) {
-            tweets = JSON.parse(localStorage[local_storage_key]);
+    function fetchUserTweets(currentRequestNumber) {
+        var localStorageKey = getLocalStorageKey(twitterUsername),
+            currentUrl = userTimelineUrlBase + twitterUsername;
+        if (localStorage[localStorageKey]) {
+            tweets = JSON.parse(localStorage[localStorageKey]);
             console.log('Found ' + tweets.length + ' tweets in localStorage!');
             if (tweets.length > 0) {
-                // set since_id to only fetch new feeds
-                since_id = BigInteger(tweets[0].id_str);
+                // set sinceId to only fetch new feeds
+                sinceId = BigInteger(tweets[0].id_str);
             }
         }
 
         $('#tweets').html('');
-        fetchUserTimeline(current_request_number, current_url);
+        fetchUserTimeline(currentRequestNumber, currentUrl);
     }
 
     function insertLabeledText(selector, label, text) {
@@ -157,37 +157,35 @@ $(document).ready(function () {
     }
 
     $('#userSearch').submit(function () {
-        var current_request_number;
-        request_number += 1;
-        current_request_number = request_number;
+        var currentRequestNumber;
+        requestNumber += 1;
+        currentRequestNumber = requestNumber;
 
         // Reset the internal state, for the new request
         tweets = [];
-        max_id = BigInteger(0);
-        since_id = BigInteger(0);
-        twitter_username = $('#twitter_username_query').val().toLowerCase();
-
-        $('#twitterResults').html('');
+        maxId = BigInteger(0);
+        sinceId = BigInteger(0);
+        twitterUsername = $('#twitter_username_query').val().toLowerCase();
 
         $.jsonp({
-            url: user_info_url + twitter_username,
+            url: userInfoUrl + twitterUsername,
             success: function (response) {
-                user_info = $('#user_info');
-                user_info.html('');
-                insertLabeledText(user_info, 'Name', response.name);
-                insertLabeledText(user_info, 'Screen name', '@' + response.screen_name);
-                insertLabeledText(user_info, 'Id', response.id);
-                insertLabeledText(user_info, 'Location', response.location);
-                insertLabeledText(user_info, 'Followers', response.followers_count);
-                insertLabeledText(user_info, 'Following', response.friends_count);
-                insertLabeledText(user_info, 'Favorites', response.favourites_count);
-                insertLabeledText(user_info, 'Tweets', response.statuses_count);
-                insertLabeledText(user_info, 'Created', response.created_at);
+                userInfo = $('#user_info');
+                userInfo.html('');
+                insertLabeledText(userInfo, 'Name', response.name);
+                insertLabeledText(userInfo, 'Screen name', '@' + response.screen_name);
+                insertLabeledText(userInfo, 'Id', response.id);
+                insertLabeledText(userInfo, 'Location', response.location);
+                insertLabeledText(userInfo, 'Followers', response.followers_count);
+                insertLabeledText(userInfo, 'Following', response.friends_count);
+                insertLabeledText(userInfo, 'Favorites', response.favourites_count);
+                insertLabeledText(userInfo, 'Tweets', response.statuses_count);
+                insertLabeledText(userInfo, 'Created', response.created_at);
 
                 $('#user_image').html('<img src="' + response.profile_image_url + '">');
                 $('#user_description').html('<p>' + response.description + '</p>');
 
-                fetchUserTweets(current_request_number);
+                fetchUserTweets(currentRequestNumber);
             },
             error: function (d, msg) {
                 console.log('error!');
