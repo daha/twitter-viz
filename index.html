@@ -7,6 +7,11 @@
 position:absolute;
 top:15px;
 }
+
+#progressbar {
+position:absolute;
+top:25px;
+}
 </style>
 
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"
@@ -20,23 +25,25 @@ top:15px;
 
 </head>
 <body>
-  <form id="userSearch" class="well form-search">
-    <div class="control-group">
-      <i class="icon-search"></i>
-      <input type="text"
-             placeholder="Twitter username"
-             class="input-medium search-query"
-             id="twitter_username_query">
-    </div>
-  </form>
-  <div id="alert_container"></div>
-  <div class="row">
-    <dl id="user_info" class="dl-horizontal span5"></dl>
-    <div class="span5">
-      <div id="user_image"></div>
-      <div id="user_description"></div>
-    </div>
-    <div id="tweets" class="span12"></div>
-  </div>
+	<form id="userSearch" class="well form-search">
+		<div class="control-group">
+			<i class="icon-search"></i> <input type="text"
+				placeholder="Twitter username" class="input-medium search-query"
+				id="twitter_username_query">
+		</div>
+	</form>
+	<div class="row">
+		<dl id="user_info" class="dl-horizontal span5"></dl>
+		<div class="span5">
+			<div id="user_image"></div>
+			<div id="user_description"></div>
+		</div>
+		<div id="tweets" class="span12"></div>
+	</div>
+	<div id="alert_container"></div>
+	<div id="progressbar"
+		class="span4 offset4 progress progress-striped active invisible">
+		<div class="bar" style="width: 0%;"></div>
+	</div>
 </body>
 </html>
