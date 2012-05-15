@@ -2,30 +2,41 @@
 <html lang="en">
 <head>
 <link rel="stylesheet" href="assets/twitter-bootstrap-v2.0.3/css/bootstrap.css">
-<script
-	src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"
-	type="text/javascript"></script>
+<style type="text/css">
+#alert_container {
+position:absolute;
+top:15px;
+}
+</style>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"
+        type="text/javascript"></script>
 <script src="assets/jquery.jsonp-2.3.0.min.js" type="text/javascript"></script>
 <script src="assets/javascript-bignum/biginteger.js" type="text/javascript"></script>
 <script src="assets/javascript-bignum/schemeNumber.js" type="text/javascript"></script>
+<script src="assets/twitter-bootstrap-v2.0.3/js/bootstrap.js"></script>
 <script src="src/twitterclient.js" type="text/javascript"></script>
+
 
 </head>
 <body>
-	<form id="userSearch" class="well form-search">
-		<div class="control-group">
-			<i class="icon-search"></i> <input type="text"
-				class="input-medium search-query" id="twitter_username_query"
-				placeholder="Twitter username">
-		</div>
-	</form>
-	<div class="row">
-		<dl id="user_info" class="dl-horizontal span5"></dl>
-		<div class="span5">
-			<div id="user_image"></div>
-			<div id="user_description"></div>
-		</div>
-		<div id="tweets" class="span12"></div>
-	</div>
+  <form id="userSearch" class="well form-search">
+    <div class="control-group">
+      <i class="icon-search"></i>
+      <input type="text"
+             placeholder="Twitter username"
+             class="input-medium search-query"
+             id="twitter_username_query">
+    </div>
+  </form>
+  <div id="alert_container"></div>
+  <div class="row">
+    <dl id="user_info" class="dl-horizontal span5"></dl>
+    <div class="span5">
+      <div id="user_image"></div>
+      <div id="user_description"></div>
+    </div>
+    <div id="tweets" class="span12"></div>
+  </div>
 </body>
 </html>

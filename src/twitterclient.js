@@ -54,6 +54,19 @@ $(document).ready(function () {
         sinceId = BigInteger(0),
         twitterUsername = '';
 
+    function clearErrors() {
+        $(".alert").alert('close');
+    }
+
+    function postError(msg) {
+        $('#alert_container').html(
+        ' <div class="span4 offset4 alert alert-error">' +
+        '  <button class="close" data-dismiss="alert">x</button>' +
+        '  <div id="alert_message">' + msg + '</div>' +
+        ' </div>');
+        $(".alert").alert();
+    }
+
     function getLocalStorageKey(username) {
         return 'user=' + username.toLowerCase();
     }
@@ -89,7 +102,7 @@ $(document).ready(function () {
     }
 
     function error(d, msg) {
-        console.log('Failed to fetch user timeline: ' + msg);
+        postError('Failed to fetch user timeline: ' + msg);
     }
 
     function makeSuccessFunction(currentRequestNumber, baseUrl) {
@@ -168,6 +181,8 @@ $(document).ready(function () {
         sinceId = BigInteger(0);
         twitterUsername = $('#twitter_username_query').val().toLowerCase();
 
+        clearErrors();
+
         $.jsonp({
             url: userInfoUrl + twitterUsername,
             success: function (response) {
@@ -189,7 +204,7 @@ $(document).ready(function () {
                 fetchUserTweets(currentRequestNumber);
             },
             error: function (d, msg) {
-                console.log('error!');
+                postError('Failed to find user ' + twitterUsername);
             }
         });
         return false;
