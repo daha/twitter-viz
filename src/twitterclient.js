@@ -34,7 +34,7 @@
 
 /*globals $,document,TwitterUserTimeline */
 // TODO: Visualize the data with d3.js
-// TODO: User workers for the calculations
+// TODO: Use workers for the calculations
 // TODO: count all hashtags in the tweets
 // TODO: count all the user_mentions in the tweets
 "use strict";
