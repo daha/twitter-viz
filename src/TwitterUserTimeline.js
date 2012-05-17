@@ -32,9 +32,12 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
+/*globals $,BigInteger,localStorage */
+"use strict";
+
 function TwitterUserTimeline() {
     var that = this,
-    userTimelineUrlBase = ('https://api.twitter.com/1/statuses/user_timeline.json'
+        userTimelineUrlBase = ('https://api.twitter.com/1/statuses/user_timeline.json'
             + '?callback=?'
             + '&count=100'
             + '&trim_user=1'
@@ -42,19 +45,35 @@ function TwitterUserTimeline() {
             + '&include_rts=1'
             + '&contributor_details=1'
             + '&screen_name='),
-            requestNumber = 0,
-            maxId = BigInteger(0),
-            sinceId = BigInteger(0),
-            expectedTweetCount = 0,
-            twitterUsername = '';
+        requestNumber = 0,
+        maxId = BigInteger(0),
+        sinceId = BigInteger(0),
+        expectedTweetCount = 0;
 
     this.tweets = [];
 
-    function getLocalStorageKey(username) {
-        return 'user=' + username.toLowerCase();
+    this.complete = function (tweets) {
+        // A callback function called when all the available tweets has been downloaded.
+    };
+
+    this.updateProgress = function (percent) {
+        // A callback function called when the progress is updated.
+    };
+
+    this.error = function (d, msg) {
+        // A callback function called in case of a error.
+    };
+
+    function updateProgress() {
+        var percent = Math.floor(that.tweets.length / expectedTweetCount * 100);
+        that.updateProgress(percent);
     }
 
-    function saveTweetsToLocalStorage() {
+    function getLocalStorageKey(twitterUsername) {
+        return 'user=' + twitterUsername.toLowerCase();
+    }
+
+    function saveTweetsToLocalStorage(twitterUsername) {
         try {
             localStorage[getLocalStorageKey(twitterUsername)] = JSON.stringify(that.tweets);
         } catch (e) {
@@ -78,7 +97,7 @@ function TwitterUserTimeline() {
         return result;
     }
 
-    function makeSuccessFunction(currentRequestNumber, baseUrl) {
+    function makeSuccessFunction(currentRequestNumber, twitterUsername, baseUrl) {
         return function (response) {
             if (currentRequestNumber === requestNumber) {
                 if (response.length > 0) { // did get new data
@@ -94,10 +113,10 @@ function TwitterUserTimeline() {
                     }
                     updateProgress();
                     maxId = BigInteger(response[response.length - 1].id_str); // The oldest is last
-                    fetchUserTimeline(currentRequestNumber, baseUrl);
+                    fetchUserTimeline(currentRequestNumber, twitterUsername, baseUrl);
                 } else {
                     that.updateProgress(100);
-                    saveTweetsToLocalStorage();
+                    saveTweetsToLocalStorage(twitterUsername);
                     that.complete(that.tweets);
                 }
             } else {
@@ -106,53 +125,35 @@ function TwitterUserTimeline() {
         };
     }
 
-    function makeRequest(currentRequestNumber, baseUrl, requestUrl) {
+    function makeRequest(currentRequestNumber, twitterUsername, baseUrl, requestUrl) {
         $.jsonp({
             url: requestUrl,
-            success: makeSuccessFunction(currentRequestNumber, baseUrl),
+            success: makeSuccessFunction(currentRequestNumber, twitterUsername, baseUrl),
             error: that.error
         });
     }
 
-    function fetchUserTimeline(currentRequestNumber, baseUrl) {
+    function fetchUserTimeline(currentRequestNumber, twitterUsername, baseUrl) {
         var currentUrl = baseUrl;
 
         // https://dev.twitter.com/docs/working-with-timelines
         currentUrl = addMaxIdIfPresent(currentUrl);
         currentUrl = addSinceIdIfPresent(currentUrl);
-        makeRequest(currentRequestNumber, baseUrl, currentUrl);
+        makeRequest(currentRequestNumber, twitterUsername, baseUrl, currentUrl);
     }
 
-    function updateProgress() {
-        var percent = Math.floor(that.tweets.length / expectedTweetCount * 100);
-        that.updateProgress(percent);
-    }
-
-    this.complete = function (tweets) {
-        // A callback function called when all the available tweets has been downloaded.
-    };
-
-    this.updateProgress = function (percent) {
-        // A callback function called when the progress is updated.
-    };
-
-    this.error = function (d, msg) {
-        // A callback function called in case of a error.
-    };
-
-    this.fetchUserTweets = function (username,  tweetCount) {
-        var currentRequestNumber;
+    this.fetchUserTweets = function (twitterUsername,  tweetCount) {
+        var currentRequestNumber,
+            localStorageKey = getLocalStorageKey(twitterUsername),
+            currentUrl = userTimelineUrlBase + twitterUsername;
         requestNumber += 1;
         currentRequestNumber = requestNumber;
-        twitterUsername = username;
         expectedTweetCount = tweetCount;
         that.tweets = [];
         maxId = BigInteger(0);
         sinceId = BigInteger(0);
         updateProgress();
 
-        var localStorageKey = getLocalStorageKey(twitterUsername),
-        currentUrl = userTimelineUrlBase + twitterUsername;
         if (localStorage[localStorageKey]) {
             that.tweets = JSON.parse(localStorage[localStorageKey]);
             updateProgress();
@@ -163,6 +164,6 @@ function TwitterUserTimeline() {
             }
         }
 
-        fetchUserTimeline(currentRequestNumber, currentUrl);
+        fetchUserTimeline(currentRequestNumber, twitterUsername, currentUrl);
     };
 }

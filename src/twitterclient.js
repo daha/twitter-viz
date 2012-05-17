@@ -32,11 +32,12 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/*globals $,document,BigInteger,localStorage,TwitterUserTimeline */
+/*globals $,document,TwitterUserTimeline */
 // TODO: Visualize the data with d3.js
 // TODO: User workers for the calculations
 // TODO: count all hashtags in the tweets
 // TODO: count all the user_mentions in the tweets
+"use strict";
 
 $(document).ready(function () {
     var userInfoUrl = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
@@ -50,11 +51,10 @@ $(document).ready(function () {
     }
 
     function postError(msg) {
-        $('#alert_container').html(
-        ' <div class="span4 offset4 alert alert-error">' +
-        '  <button class="close" data-dismiss="alert">x</button>' +
-        '  <div id="alert_message">' + msg + '</div>' +
-        ' </div>');
+        $('#alert_container').html((' <div class="span4 offset4 alert alert-error">' +
+            '  <button class="close" data-dismiss="alert">x</button>' +
+            '  <div id="alert_message">' + msg + '</div>' +
+            ' </div>'));
         $(".alert").alert();
     }
 
