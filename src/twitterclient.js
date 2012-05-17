@@ -41,33 +41,11 @@
 
 $(document).ready(function () {
     var userInfoUrl = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
-        globalTwitterUsername = '',
         twitterUserTimeline = null;
 
-    function postError(msg) {
-        $('#alert_container').html(
-        ' <div class="span4 offset4 alert alert-error">' +
-        '  <button class="close" data-dismiss="alert">x</button>' +
-        '  <div id="alert_message">' + msg + '</div>' +
-        ' </div>');
-        $(".alert").alert();
-    }
-
-
-    function completeBar() {
-        $('.bar').width('100%');
-    }
-
-    function hideProgressBar(duration) {
-        $('#progressbar').fadeOut(duration, function () {
-            $(this).addClass('invisible');
-            $('.bar').width('0%');
-        });
-    }
-
-
     function TwitterUserTimeline() {
-        var userTimelineUrlBase = ('https://api.twitter.com/1/statuses/user_timeline.json'
+        var that = this,
+            userTimelineUrlBase = ('https://api.twitter.com/1/statuses/user_timeline.json'
                 + '?callback=?'
                 + '&count=100'
                 + '&trim_user=1'
@@ -76,17 +54,12 @@ $(document).ready(function () {
                 + '&contributor_details=1'
                 + '&screen_name='),
             requestNumber = 0,
-            tweets = [],
             maxId = BigInteger(0),
             sinceId = BigInteger(0),
             expectedTweetCount = 0,
             twitterUsername = '';
 
-        function updateProgressBar() {
-            var width = Math.floor(tweets.length / expectedTweetCount * 100);
-            $('.bar').width(width + '%');
-            $('#progressbar').removeClass('invisible');
-        }
+        this.tweets = [];
 
         function getLocalStorageKey(username) {
             return 'user=' + username.toLowerCase();
@@ -94,16 +67,10 @@ $(document).ready(function () {
 
         function saveTweetsToLocalStorage() {
             try {
-                localStorage[getLocalStorageKey(twitterUsername)] = JSON.stringify(tweets);
+                localStorage[getLocalStorageKey(twitterUsername)] = JSON.stringify(that.tweets);
             } catch (e) {
                 console.log("Local storage is full, failed to store tweets for " + twitterUsername);
             }
-        }
-
-        function addTweetsToTag(tag) {
-            $.each(tweets, function (i, tweet) {
-                $(tag).append('<p>' + tweet.text + '</p>');
-            });
         }
 
         function addMaxIdIfPresent(currentUrl) {
@@ -122,34 +89,27 @@ $(document).ready(function () {
             return result;
         }
 
-
-        function error(d, msg) {
-            hideProgressBar('fast');
-            postError('Failed to fetch user timeline: ' + msg);
-        }
-
         function makeSuccessFunction(currentRequestNumber, baseUrl) {
             return function (response) {
                 if (currentRequestNumber === requestNumber) {
                     if (response.length > 0) { // did get new data
                         if (sinceId.isZero()) { // a response with older tweets
-                            tweets = tweets.concat(response);
+                            that.tweets = that.tweets.concat(response);
                         } else if (maxId.isZero()) { // a response with newer tweets
-                            tweets = response.concat(tweets);
+                            that.tweets = response.concat(that.tweets);
                         } else { // need to sort!
-                            tweets = tweets.concat(response);
-                            tweets.sort(function (a, b) {
+                            that.tweets = that.tweets.concat(response);
+                            that.tweets.sort(function (a, b) {
                                 return BigInteger(a.id_str).compare(BigInteger(b.id_str));
                             });
                         }
-                        updateProgressBar();
+                        updateProgress();
                         maxId = BigInteger(response[response.length - 1].id_str); // The oldest is last
                         fetchUserTimeline(currentRequestNumber, baseUrl);
                     } else {
-                        completeBar();
+                        that.updateProgress(100);
                         saveTweetsToLocalStorage();
-                        addTweetsToTag('#tweets');
-                        hideProgressBar('slow');
+                        that.complete(that.tweets);
                     }
                 } else {
                     console.log('Received response from old search!', currentRequestNumber, requestNumber);
@@ -161,7 +121,7 @@ $(document).ready(function () {
             $.jsonp({
                 url: requestUrl,
                 success: makeSuccessFunction(currentRequestNumber, baseUrl),
-                error: error
+                error: that.error
             });
         }
 
@@ -174,32 +134,69 @@ $(document).ready(function () {
             makeRequest(currentRequestNumber, baseUrl, currentUrl);
         }
 
+        function updateProgress() {
+            var percent = Math.floor(that.tweets.length / expectedTweetCount * 100);
+            that.updateProgress(percent);
+        }
+
+        this.complete = function (tweets) {
+          // A callback function called when all the available tweets has been downloaded.
+        };
+
+        this.updateProgress = function (percent) {
+            // A callback function called when the progress is updated.
+        };
+
+        this.error = function (d, msg) {
+            // A callback function called in case of a error.
+        };
+
         this.fetchUserTweets = function (username,  tweetCount) {
             var currentRequestNumber;
             requestNumber += 1;
             currentRequestNumber = requestNumber;
             twitterUsername = username;
             expectedTweetCount = tweetCount;
-            tweets = [];
+            that.tweets = [];
             maxId = BigInteger(0);
             sinceId = BigInteger(0);
-            updateProgressBar();
+            updateProgress();
 
             var localStorageKey = getLocalStorageKey(twitterUsername),
             currentUrl = userTimelineUrlBase + twitterUsername;
             if (localStorage[localStorageKey]) {
-                tweets = JSON.parse(localStorage[localStorageKey]);
-                updateProgressBar();
-                console.log('Found ' + tweets.length + ' tweets in localStorage!');
-                if (tweets.length > 0) {
+                that.tweets = JSON.parse(localStorage[localStorageKey]);
+                updateProgress();
+                console.log('Found ' + that.tweets.length + ' tweets in localStorage!');
+                if (that.tweets.length > 0) {
                     // set sinceId to only fetch new feeds
-                    sinceId = BigInteger(tweets[0].id_str);
+                    sinceId = BigInteger(that.tweets[0].id_str);
                 }
             }
 
-            $('#tweets').html('');
             fetchUserTimeline(currentRequestNumber, currentUrl);
         };
+    }
+
+    function hideProgressBar(duration) {
+        $('#progressbar').fadeOut(duration, function () {
+            $(this).addClass('invisible');
+            $('.bar').width('0%');
+        });
+    }
+
+    function postError(msg) {
+        $('#alert_container').html(
+        ' <div class="span4 offset4 alert alert-error">' +
+        '  <button class="close" data-dismiss="alert">x</button>' +
+        '  <div id="alert_message">' + msg + '</div>' +
+        ' </div>');
+        $(".alert").alert();
+    }
+
+    function error(d, msg) {
+        hideProgressBar('fast');
+        postError('Failed to fetch user timeline: ' + msg);
     }
 
     function clearErrors() {
@@ -212,19 +209,37 @@ $(document).ready(function () {
         }
     }
 
+    function updateProgressBar(percent) {
+        $('.bar').width(percent + '%');
+        $('#progressbar').removeClass('invisible');
+    }
+
+    function showTweets(tweets) {
+        $.each(tweets, function (i, tweet) {
+            $('#tweets').append('<p>' + tweet.text + '</p>');
+        });
+        return false;
+    }
+
+    function complete(tweets) {
+        showTweets(tweets);
+        hideProgressBar('slow');
+    }
+
     twitterUserTimeline = new TwitterUserTimeline();
+    twitterUserTimeline.updateProgress = updateProgressBar;
+    twitterUserTimeline.complete = complete;
+    twitterUserTimeline.error = error;
+    console.log(twitterUserTimeline);
 
     $('#userSearch').submit(function () {
-        var userInfo;
-
-        // Reset the internal state, for the new request
-
-        globalTwitterUsername = $('#twitter_username_query').val().toLowerCase();
+        var userInfo,
+            twitterUsername = $('#twitter_username_query').val().toLowerCase();
 
         clearErrors();
 
         $.jsonp({
-            url: userInfoUrl + globalTwitterUsername,
+            url: userInfoUrl + twitterUsername,
             success: function (response) {
                 userInfo = $('#user_info');
                 userInfo.html('');
@@ -241,11 +256,12 @@ $(document).ready(function () {
                 $('#user_image').html('<img src="' + response.profile_image_url + '">');
                 $('#user_description').html('<p>' + response.description + '</p>');
 
-                twitterUserTimeline.fetchUserTweets(globalTwitterUsername, response.statuses_count);
+                $('#tweets').html('');
+                twitterUserTimeline.fetchUserTweets(twitterUsername, response.statuses_count);
             },
             error: function (d, msg) {
                 hideProgressBar('fast');
-                postError('Failed to find user ' + globalTwitterUsername);
+                postError('Failed to find user ' + twitterUsername);
             }
         });
         return false;
