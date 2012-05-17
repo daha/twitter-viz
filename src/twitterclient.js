@@ -38,26 +38,11 @@
 // TODO: User workers for the calculations
 // TODO: count all hashtags in the tweets
 // TODO: count all the user_mentions in the tweets
+
 $(document).ready(function () {
     var userInfoUrl = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
-        userTimelineUrlBase = ('https://api.twitter.com/1/statuses/user_timeline.json'
-                            + '?callback=?'
-                            + '&count=100'
-                            + '&trim_user=1'
-                            + '&include_entities=1'
-                            + '&include_rts=1'
-                            + '&contributor_details=1'
-                            + '&screen_name='),
-        requestNumber = 0,
-        tweets = [],
-        maxId = BigInteger(0),
-        sinceId = BigInteger(0),
-        expected_tweet_count = 0,
-        twitterUsername = '';
-
-    function clearErrors() {
-        $(".alert").alert('close');
-    }
+        globalTwitterUsername = '',
+        twitterUserTimeline = null;
 
     function postError(msg) {
         $('#alert_container').html(
@@ -68,11 +53,6 @@ $(document).ready(function () {
         $(".alert").alert();
     }
 
-    function updateProgressBar() {
-        var width = Math.floor(tweets.length / expected_tweet_count * 100);
-        $('.bar').width(width + '%');
-        $('#progressbar').removeClass('invisible');
-    }
 
     function completeBar() {
         $('.bar').width('100%');
@@ -85,106 +65,145 @@ $(document).ready(function () {
         });
     }
 
-    function getLocalStorageKey(username) {
-        return 'user=' + username.toLowerCase();
-    }
 
-    function saveTweetsToLocalStorage() {
-        try {
-            localStorage[getLocalStorageKey(twitterUsername)] = JSON.stringify(tweets);
-        } catch (e) {
-            console.log("Local storage is full, failed to store tweets for " + twitterUsername);
+    function TwitterUserTimeline() {
+        var userTimelineUrlBase = ('https://api.twitter.com/1/statuses/user_timeline.json'
+                + '?callback=?'
+                + '&count=100'
+                + '&trim_user=1'
+                + '&include_entities=1'
+                + '&include_rts=1'
+                + '&contributor_details=1'
+                + '&screen_name='),
+            requestNumber = 0,
+            tweets = [],
+            maxId = BigInteger(0),
+            sinceId = BigInteger(0),
+            expectedTweetCount = 0,
+            twitterUsername = '';
+
+        function updateProgressBar() {
+            var width = Math.floor(tweets.length / expectedTweetCount * 100);
+            $('.bar').width(width + '%');
+            $('#progressbar').removeClass('invisible');
         }
-    }
 
-    function addTweetsToTag(tag) {
-        $.each(tweets, function (i, tweet) {
-            $(tag).append('<p>' + tweet.text + '</p>');
-        });
-    }
-
-    function addMaxIdIfPresent(currentUrl) {
-        var result = currentUrl;
-        if (!maxId.isZero()) {
-            result += '&max_id=' + maxId.prev().toString();
+        function getLocalStorageKey(username) {
+            return 'user=' + username.toLowerCase();
         }
-        return result;
-    }
 
-    function addSinceIdIfPresent(currentUrl) {
-        var result = currentUrl;
-        if (!sinceId.isZero()) {
-            result += "&since_id=" + sinceId.next().toString();
-        }
-        return result;
-    }
-
-    function error(d, msg) {
-        hideProgressBar('fast');
-        postError('Failed to fetch user timeline: ' + msg);
-    }
-
-    function makeSuccessFunction(currentRequestNumber, baseUrl) {
-        return function (response) {
-            if (currentRequestNumber === requestNumber) {
-                if (response.length > 0) { // did get new data
-                    if (sinceId.isZero()) { // a response with older tweets
-                        tweets = tweets.concat(response);
-                    } else if (maxId.isZero()) { // a response with newer tweets
-                        tweets = response.concat(tweets);
-                    } else { // need to sort!
-                        tweets = tweets.concat(response);
-                        tweets.sort(function (a, b) {
-                            return BigInteger(a.id_str).compare(BigInteger(b.id_str));
-                        });
-                    }
-                    updateProgressBar();
-                    maxId = BigInteger(response[response.length - 1].id_str); // The oldest is last
-                    fetchUserTimeline(currentRequestNumber, baseUrl);
-                } else {
-                    completeBar();
-                    saveTweetsToLocalStorage();
-                    addTweetsToTag('#tweets');
-                    hideProgressBar('slow');
-                }
-            } else {
-                console.log('Received response from old search!', currentRequestNumber, requestNumber);
+        function saveTweetsToLocalStorage() {
+            try {
+                localStorage[getLocalStorageKey(twitterUsername)] = JSON.stringify(tweets);
+            } catch (e) {
+                console.log("Local storage is full, failed to store tweets for " + twitterUsername);
             }
+        }
+
+        function addTweetsToTag(tag) {
+            $.each(tweets, function (i, tweet) {
+                $(tag).append('<p>' + tweet.text + '</p>');
+            });
+        }
+
+        function addMaxIdIfPresent(currentUrl) {
+            var result = currentUrl;
+            if (!maxId.isZero()) {
+                result += '&max_id=' + maxId.prev().toString();
+            }
+            return result;
+        }
+
+        function addSinceIdIfPresent(currentUrl) {
+            var result = currentUrl;
+            if (!sinceId.isZero()) {
+                result += "&since_id=" + sinceId.next().toString();
+            }
+            return result;
+        }
+
+
+        function error(d, msg) {
+            hideProgressBar('fast');
+            postError('Failed to fetch user timeline: ' + msg);
+        }
+
+        function makeSuccessFunction(currentRequestNumber, baseUrl) {
+            return function (response) {
+                if (currentRequestNumber === requestNumber) {
+                    if (response.length > 0) { // did get new data
+                        if (sinceId.isZero()) { // a response with older tweets
+                            tweets = tweets.concat(response);
+                        } else if (maxId.isZero()) { // a response with newer tweets
+                            tweets = response.concat(tweets);
+                        } else { // need to sort!
+                            tweets = tweets.concat(response);
+                            tweets.sort(function (a, b) {
+                                return BigInteger(a.id_str).compare(BigInteger(b.id_str));
+                            });
+                        }
+                        updateProgressBar();
+                        maxId = BigInteger(response[response.length - 1].id_str); // The oldest is last
+                        fetchUserTimeline(currentRequestNumber, baseUrl);
+                    } else {
+                        completeBar();
+                        saveTweetsToLocalStorage();
+                        addTweetsToTag('#tweets');
+                        hideProgressBar('slow');
+                    }
+                } else {
+                    console.log('Received response from old search!', currentRequestNumber, requestNumber);
+                }
+            };
+        }
+
+        function makeRequest(currentRequestNumber, baseUrl, requestUrl) {
+            $.jsonp({
+                url: requestUrl,
+                success: makeSuccessFunction(currentRequestNumber, baseUrl),
+                error: error
+            });
+        }
+
+        function fetchUserTimeline(currentRequestNumber, baseUrl) {
+            var currentUrl = baseUrl;
+
+            // https://dev.twitter.com/docs/working-with-timelines
+            currentUrl = addMaxIdIfPresent(currentUrl);
+            currentUrl = addSinceIdIfPresent(currentUrl);
+            makeRequest(currentRequestNumber, baseUrl, currentUrl);
+        }
+
+        this.fetchUserTweets = function (username,  tweetCount) {
+            var currentRequestNumber;
+            requestNumber += 1;
+            currentRequestNumber = requestNumber;
+            twitterUsername = username;
+            expectedTweetCount = tweetCount;
+            tweets = [];
+            maxId = BigInteger(0);
+            sinceId = BigInteger(0);
+            updateProgressBar();
+
+            var localStorageKey = getLocalStorageKey(twitterUsername),
+            currentUrl = userTimelineUrlBase + twitterUsername;
+            if (localStorage[localStorageKey]) {
+                tweets = JSON.parse(localStorage[localStorageKey]);
+                updateProgressBar();
+                console.log('Found ' + tweets.length + ' tweets in localStorage!');
+                if (tweets.length > 0) {
+                    // set sinceId to only fetch new feeds
+                    sinceId = BigInteger(tweets[0].id_str);
+                }
+            }
+
+            $('#tweets').html('');
+            fetchUserTimeline(currentRequestNumber, currentUrl);
         };
     }
 
-    function makeRequest(currentRequestNumber, baseUrl, requestUrl) {
-        $.jsonp({
-            url: requestUrl,
-            success: makeSuccessFunction(currentRequestNumber, baseUrl),
-            error: error
-        });
-    }
-
-    function fetchUserTimeline(currentRequestNumber, baseUrl) {
-        var currentUrl = baseUrl;
-
-        // https://dev.twitter.com/docs/working-with-timelines
-        currentUrl = addMaxIdIfPresent(currentUrl);
-        currentUrl = addSinceIdIfPresent(currentUrl);
-        makeRequest(currentRequestNumber, baseUrl, currentUrl);
-    }
-
-    function fetchUserTweets(currentRequestNumber) {
-        var localStorageKey = getLocalStorageKey(twitterUsername),
-            currentUrl = userTimelineUrlBase + twitterUsername;
-        if (localStorage[localStorageKey]) {
-            tweets = JSON.parse(localStorage[localStorageKey]);
-            updateProgressBar();
-            console.log('Found ' + tweets.length + ' tweets in localStorage!');
-            if (tweets.length > 0) {
-                // set sinceId to only fetch new feeds
-                sinceId = BigInteger(tweets[0].id_str);
-            }
-        }
-
-        $('#tweets').html('');
-        fetchUserTimeline(currentRequestNumber, currentUrl);
+    function clearErrors() {
+        $(".alert").alert('close');
     }
 
     function insertLabeledText(selector, label, text) {
@@ -193,21 +212,19 @@ $(document).ready(function () {
         }
     }
 
+    twitterUserTimeline = new TwitterUserTimeline();
+
     $('#userSearch').submit(function () {
-        var currentRequestNumber, userInfo;
-        requestNumber += 1;
-        currentRequestNumber = requestNumber;
+        var userInfo;
 
         // Reset the internal state, for the new request
-        tweets = [];
-        maxId = BigInteger(0);
-        sinceId = BigInteger(0);
-        twitterUsername = $('#twitter_username_query').val().toLowerCase();
+
+        globalTwitterUsername = $('#twitter_username_query').val().toLowerCase();
 
         clearErrors();
 
         $.jsonp({
-            url: userInfoUrl + twitterUsername,
+            url: userInfoUrl + globalTwitterUsername,
             success: function (response) {
                 userInfo = $('#user_info');
                 userInfo.html('');
@@ -224,13 +241,11 @@ $(document).ready(function () {
                 $('#user_image').html('<img src="' + response.profile_image_url + '">');
                 $('#user_description').html('<p>' + response.description + '</p>');
 
-                expected_tweet_count = response.statuses_count;
-                updateProgressBar();
-                fetchUserTweets(currentRequestNumber);
+                twitterUserTimeline.fetchUserTweets(globalTwitterUsername, response.statuses_count);
             },
             error: function (d, msg) {
                 hideProgressBar('fast');
-                postError('Failed to find user ' + twitterUsername);
+                postError('Failed to find user ' + globalTwitterUsername);
             }
         });
         return false;
