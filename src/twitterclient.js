@@ -45,7 +45,6 @@ $(document).ready(function () {
 
     function hideProgressBar(duration) {
         $('#progressbar').fadeOut(duration, function () {
-            $(this).addClass('invisible');
             $('.bar').width('0%');
         });
     }
@@ -75,7 +74,6 @@ $(document).ready(function () {
 
     function updateProgressBar(percent) {
         $('.bar').width(percent + '%');
-        $('#progressbar').removeClass('invisible');
         $('#progressbar').show();
     }
 
