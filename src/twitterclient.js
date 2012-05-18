@@ -76,6 +76,7 @@ $(document).ready(function () {
     function updateProgressBar(percent) {
         $('.bar').width(percent + '%');
         $('#progressbar').removeClass('invisible');
+        $('#progressbar').show();
     }
 
     function showTweets(tweets) {
