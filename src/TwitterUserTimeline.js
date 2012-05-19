@@ -39,7 +39,7 @@ function TwitterUserTimeline() {
     var that = this,
         userTimelineUrlBase = ('https://api.twitter.com/1/statuses/user_timeline.json'
             + '?callback=?'
-            + '&count=100'
+            + '&count=200'
             + '&trim_user=1'
             + '&include_entities=1'
             + '&include_rts=1'
