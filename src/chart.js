@@ -56,7 +56,9 @@ Chart.prototype.createChart = function (selector, data) {
             .attr("width", width + 50)
             .attr("height", height + 40)
             .append("g")
-            .attr("transform", "translate(25,-15)");
+            .attr("transform", "translate(25,-15)"),
+        bars =  chart.selectAll("rect")
+            .data(data);
 
     // x-axis
     chart.append("g").selectAll("line")
@@ -102,12 +104,16 @@ Chart.prototype.createChart = function (selector, data) {
         .text(String);
 
     // the bars
-    chart.selectAll("rect")
-        .data(data)
-        .enter().append("rect")
+    bars.enter()
+        .append("rect")
         .attr("x", function (d) { return x(d.key) - 0.5; })
-        .attr("y", function (d) { return height - y(d.value) - 0.5; })
+        .attr("y", function (d) { return height; })
         .attr("width", barWidth)
+        .attr("height", 0);
+
+    bars.transition()
+        .duration(3000)
+        .attr("y", function(d) { return height - y(d.value) - 0.5; })
         .attr("height", function (d) { return y(d.value); });
 
     // the base line
