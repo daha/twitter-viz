@@ -90,6 +90,8 @@ $(document).ready(function () {
             tweetsLength = cf.dimension(function (d) { return d.text.length; }),
             tweetsLengths = tweetsLength.group();
 
+        // Clear the div until I have figured out how to do it with d3.
+        $('#tweet_lengths').html('');
         chart.createChart("#tweet_lengths", tweetsLengths.all());
     }
 
