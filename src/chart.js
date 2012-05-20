@@ -37,6 +37,9 @@
 "use strict";
 function Chart() {}
 
+// TODO: Add label to the x-axis
+// TODO: Add label to the y-axis
+// TODO: Add title to the chart
 Chart.prototype.createChart = function (selector, data) {
     var max = d3.max(data, function (d) { return d.value; }),
         barWidth = 4,
@@ -55,15 +58,16 @@ Chart.prototype.createChart = function (selector, data) {
             .append("g")
             .attr("transform", "translate(25,-15)");
 
-    chart.selectAll("rect")
-        .data(data)
-        .enter().append("rect")
-        .attr("x", function (d) { return x(d.key) - 0.5; })
-        .attr("y", function (d) { return height - y(d.value) - 0.5; })
-        .attr("width", barWidth)
-        .attr("height", function (d) { return y(d.value); });
+    chart.append("g").selectAll("line")
+        .data(x.ticks(10))
+        .enter().append("line")
+        .attr("x1", function (d) { return x(d) - 0.5; })
+        .attr("x2", function (d) { return x(d) - 0.5; })
+        .attr("y1", height - 0.5)
+        .attr("y2", height - 0.5 + 5)
+        .style("stroke", "#ccc");
 
-    chart.selectAll("line")
+    chart.append("g").selectAll("line")
         .data(y.ticks(5))
         .enter().append("line")
         .attr("x1", 0)
@@ -71,6 +75,17 @@ Chart.prototype.createChart = function (selector, data) {
         .attr("y1", function (d) { return height - y(d) - 0.5; })
         .attr("y2", function (d) { return height - y(d) - 0.5; })
         .style("stroke", "#ccc");
+
+    chart.selectAll(".rule_x")
+        .data(x.ticks(10))
+        .enter().append("text")
+        .attr("class", "rule_x")
+        .attr("x", function (d) { return x(d) - 0.5; })
+        .attr("y", height - 0.5)
+        .attr("dy", 5)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "text-before-edge")
+        .text(String);
 
     chart.selectAll(".rule_y")
         .data(y.ticks(5))
@@ -84,20 +99,18 @@ Chart.prototype.createChart = function (selector, data) {
         .attr("dominant-baseline", "central")
         .text(String);
 
+    chart.selectAll("rect")
+        .data(data)
+        .enter().append("rect")
+        .attr("x", function (d) { return x(d.key) - 0.5; })
+        .attr("y", function (d) { return height - y(d.value) - 0.5; })
+        .attr("width", barWidth)
+        .attr("height", function (d) { return y(d.value); });
+
     chart.append("line")
         .attr("y1", height - 0.5)
         .attr("y2", height - 0.5)
         .attr("x1", 0)
         .attr("x2", width)
         .style("stroke", "#000");
-
-    chart.selectAll(".rule_x")
-        .data(x.ticks(10))
-        .enter().append("text")
-        .attr("class", "rule_x")
-        .attr("x", x)
-        .attr("y", height - 0.5)
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "text-before-edge")
-        .text(String);
 };
