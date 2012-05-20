@@ -88,28 +88,58 @@ $(document).ready(function () {
         var max = d3.max(data, function (d) { return d.value; });
 
         var barWidth = 5,
-            w = barWidth * 144,
-            h = 200;
+            width = barWidth * 144,
+            height = 200 + 40;
 
         var x = d3.scale.linear()
             .domain([0, 144])
-            .range([0, w]);
+            .range([0, width]);
 
         var y = d3.scale.linear()
             .domain([0, max])
-            .rangeRound([0, h]);
+            .rangeRound([0, height]);
 
         var chart = d3.select("#tweet_lengths").append("svg")
             .attr("class", "chart")
-            .attr("width", w)
-            .attr("height", h);
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(10,-15)");
+
         chart.selectAll("rect")
             .data(data)
             .enter().append("rect")
-            .attr("x", function(d) { return x(d.key) - 0.5; })
-            .attr("y", function(d) { return h - y(d.value) - 0.5; })
+            .attr("x", function(d, i) { return x(d.key) - .5; })
+            .attr("y", function(d) { return height - y(d.value) - .5; })
             .attr("width", barWidth)
             .attr("height", function(d) { return y(d.value); });
+
+        chart.selectAll("line")
+            .data(y.ticks(5))
+            .enter().append("line")
+            .attr("x1", 0)
+            .attr("x2", width)
+            .attr("y1", function (d) { return height - y(d) - 0.5; })
+            .attr("y2", function (d) { return height - y(d) - 0.5; })
+            .style("stroke", "#ccc");
+
+        chart.selectAll(".rule")
+            .data(y.ticks(5))
+            .enter().append("text")
+            .attr("class", "rule")
+            .attr("x", 0)
+            .attr("y", function (d) { return height - y(d) - 0.5; })
+            .attr("dx", -5)
+            .attr("dy", 3)
+            .attr("text-anchor", "middle")
+            .text(String);
+
+        chart.append("line")
+            .attr("y1", height)
+            .attr("y2", height)
+            .attr("x1", 0)
+            .attr("x2", width)
+            .style("stroke", "#000");
     }
 
     function visualize(tweets) {
@@ -125,44 +155,47 @@ $(document).ready(function () {
         visualize(twitterUserTimeline.tweets);
     }
 
+    function submitQuery(twitterUsername) {
+        var userInfo;
+        $.jsonp({
+                    url: userInfoUrl + twitterUsername,
+                    success: function (response) {
+                        userInfo = $('#user_info');
+                        userInfo.html('');
+                        insertLabeledText(userInfo, 'Name', response.name);
+                        insertLabeledText(userInfo, 'Screen name', '@' + response.screen_name);
+                        insertLabeledText(userInfo, 'Id', response.id);
+                        insertLabeledText(userInfo, 'Location', response.location);
+                        insertLabeledText(userInfo, 'Followers', response.followers_count);
+                        insertLabeledText(userInfo, 'Following', response.friends_count);
+                        insertLabeledText(userInfo, 'Favorites', response.favourites_count);
+                        insertLabeledText(userInfo, 'Tweets', response.statuses_count);
+                        insertLabeledText(userInfo, 'Created', response.created_at);
+                        $('#user_image').html('<img src="' + response.profile_image_url + '">');
+                        $('#user_description').html('<p>' + response.description + '</p>');
+                        $('#tweets').html('');
+                        twitterUserTimeline.fetchUserTweets(twitterUsername, response.statuses_count);
+                    },
+                    error: function (d, msg) {
+                        hideProgressBar('fast');
+                        postError('Failed to find user ' + twitterUsername);
+                    }
+                });
+    };
+
     twitterUserTimeline = new TwitterUserTimeline();
+
     twitterUserTimeline.updateProgress = updateProgressBar;
     twitterUserTimeline.complete = complete;
     twitterUserTimeline.error = error;
+
     console.log(twitterUserTimeline);
 
     $('#userSearch').submit(function () {
-        var userInfo,
-            twitterUsername = $('#twitter_username_query').val().toLowerCase();
+        var twitterUsername = $('#twitter_username_query').val().toLowerCase();
 
         clearErrors();
-
-        $.jsonp({
-            url: userInfoUrl + twitterUsername,
-            success: function (response) {
-                userInfo = $('#user_info');
-                userInfo.html('');
-                insertLabeledText(userInfo, 'Name', response.name);
-                insertLabeledText(userInfo, 'Screen name', '@' + response.screen_name);
-                insertLabeledText(userInfo, 'Id', response.id);
-                insertLabeledText(userInfo, 'Location', response.location);
-                insertLabeledText(userInfo, 'Followers', response.followers_count);
-                insertLabeledText(userInfo, 'Following', response.friends_count);
-                insertLabeledText(userInfo, 'Favorites', response.favourites_count);
-                insertLabeledText(userInfo, 'Tweets', response.statuses_count);
-                insertLabeledText(userInfo, 'Created', response.created_at);
-
-                $('#user_image').html('<img src="' + response.profile_image_url + '">');
-                $('#user_description').html('<p>' + response.description + '</p>');
-
-                $('#tweets').html('');
-                twitterUserTimeline.fetchUserTweets(twitterUsername, response.statuses_count);
-            },
-            error: function (d, msg) {
-                hideProgressBar('fast');
-                postError('Failed to find user ' + twitterUsername);
-            }
-        });
+        submitQuery(twitterUsername);
         return false;
     });
 });
