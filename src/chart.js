@@ -39,9 +39,9 @@ function Chart() {}
 
 Chart.prototype.createChart = function (selector, data) {
     var max = d3.max(data, function (d) { return d.value; }),
-        barWidth = 5,
+        barWidth = 4,
         width = barWidth * 144,
-        height = 200 + 40,
+        height = 250,
         x = d3.scale.linear()
             .domain([0, 144])
             .range([0, width]),
@@ -50,15 +50,15 @@ Chart.prototype.createChart = function (selector, data) {
             .rangeRound([0, height]),
         chart = d3.select("#tweet_lengths").append("svg")
             .attr("class", "chart")
-            .attr("width", width)
-            .attr("height", height)
+            .attr("width", width + 50)
+            .attr("height", height + 40)
             .append("g")
-            .attr("transform", "translate(10,-15)");
+            .attr("transform", "translate(25,-15)");
 
     chart.selectAll("rect")
         .data(data)
         .enter().append("rect")
-        .attr("x", function (d, i) { return x(d.key) - 0.5; })
+        .attr("x", function (d) { return x(d.key) - 0.5; })
         .attr("y", function (d) { return height - y(d.value) - 0.5; })
         .attr("width", barWidth)
         .attr("height", function (d) { return y(d.value); });
@@ -78,14 +78,15 @@ Chart.prototype.createChart = function (selector, data) {
         .attr("class", "rule")
         .attr("x", 0)
         .attr("y", function (d) { return height - y(d) - 0.5; })
-        .attr("dx", -5)
-        .attr("dy", 3)
-        .attr("text-anchor", "middle")
+        .attr("dx", -3)
+        .attr("dy", 0)
+        .attr("text-anchor", "end")
+        .attr("dominant-baseline", "central")
         .text(String);
 
     chart.append("line")
-        .attr("y1", height)
-        .attr("y2", height)
+        .attr("y1", height - 0.5)
+        .attr("y2", height - 0.5)
         .attr("x1", 0)
         .attr("x2", width)
         .style("stroke", "#000");
