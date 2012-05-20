@@ -32,7 +32,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/*globals $,document,TwitterUserTimeline */
+/*globals $,document,TwitterUserTimeline,crossfilter */
 // TODO: Visualize the data with d3.js
 // TODO: Use workers for the calculations
 // TODO: count all hashtags in the tweets
@@ -41,7 +41,8 @@
 
 $(document).ready(function () {
     var userInfoUrl = 'https://api.twitter.com/1/users/show.json?callback=?&include_entities=true&screen_name=',
-        twitterUserTimeline = null;
+        twitterUserTimeline = null,
+        chart = new Chart();
 
     function hideProgressBar(duration) {
         $('#progressbar').fadeOut(200, function () {
@@ -84,69 +85,12 @@ $(document).ready(function () {
         return false;
     }
 
-    function chart(data) {
-        var max = d3.max(data, function (d) { return d.value; });
-
-        var barWidth = 5,
-            width = barWidth * 144,
-            height = 200 + 40;
-
-        var x = d3.scale.linear()
-            .domain([0, 144])
-            .range([0, width]);
-
-        var y = d3.scale.linear()
-            .domain([0, max])
-            .rangeRound([0, height]);
-
-        var chart = d3.select("#tweet_lengths").append("svg")
-            .attr("class", "chart")
-            .attr("width", width)
-            .attr("height", height)
-            .append("g")
-            .attr("transform", "translate(10,-15)");
-
-        chart.selectAll("rect")
-            .data(data)
-            .enter().append("rect")
-            .attr("x", function(d, i) { return x(d.key) - .5; })
-            .attr("y", function(d) { return height - y(d.value) - .5; })
-            .attr("width", barWidth)
-            .attr("height", function(d) { return y(d.value); });
-
-        chart.selectAll("line")
-            .data(y.ticks(5))
-            .enter().append("line")
-            .attr("x1", 0)
-            .attr("x2", width)
-            .attr("y1", function (d) { return height - y(d) - 0.5; })
-            .attr("y2", function (d) { return height - y(d) - 0.5; })
-            .style("stroke", "#ccc");
-
-        chart.selectAll(".rule")
-            .data(y.ticks(5))
-            .enter().append("text")
-            .attr("class", "rule")
-            .attr("x", 0)
-            .attr("y", function (d) { return height - y(d) - 0.5; })
-            .attr("dx", -5)
-            .attr("dy", 3)
-            .attr("text-anchor", "middle")
-            .text(String);
-
-        chart.append("line")
-            .attr("y1", height)
-            .attr("y2", height)
-            .attr("x1", 0)
-            .attr("x2", width)
-            .style("stroke", "#000");
-    }
-
     function visualize(tweets) {
         var cf = crossfilter(tweets),
             tweetsLength = cf.dimension(function (d) { return d.text.length; }),
             tweetsLengths = tweetsLength.group();
-        chart(tweetsLengths.all());
+
+        chart.createChart("#tweet_lengths", tweetsLengths.all());
     }
 
     function complete(tweets) {
