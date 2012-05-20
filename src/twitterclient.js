@@ -88,9 +88,10 @@ $(document).ready(function () {
     function visualize(tweets) {
         var cf = crossfilter(tweets),
             tweetsLength = cf.dimension(function (d) { return d.text.length; }),
-            tweetsLengths = tweetsLength.group();
-
-        chart.createChart("#tweet_lengths", tweetsLengths.all());
+            tweetsLengths = tweetsLength.group(),
+            selector = "#tweet_lengths";
+        chart.createChart(selector, tweetsLengths.all());
+        $(selector).fadeTo('slow', 1); // to avoid the blinking graph
     }
 
     function complete(tweets) {
@@ -118,7 +119,7 @@ $(document).ready(function () {
                         $('#user_image').html('<img src="' + response.profile_image_url + '">');
                         $('#user_description').html('<p>' + response.description + '</p>');
                         $('#tweets').html('');
-                        $('#tweet_lengths').html('');
+                        $('#tweet_lengths').html('').css("opacity", 0);
 
                         twitterUserTimeline.fetchUserTweets(twitterUsername, response.statuses_count);
                     },

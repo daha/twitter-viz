@@ -32,7 +32,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/*globals d3 */
+/*globals d3,window */
 
 "use strict";
 function Chart() {}
@@ -45,6 +45,8 @@ Chart.prototype.createChart = function (selector, data) {
         barWidth = 4,
         width = barWidth * 144,
         height = 250,
+        fadeInTime = 2000,
+        barDelay = fadeInTime,
         x = d3.scale.linear()
             .domain([0, 144])
             .range([0, width]),
@@ -112,10 +114,13 @@ Chart.prototype.createChart = function (selector, data) {
         .attr("width", barWidth)
         .attr("height", 0);
 
-    bars.transition()
-        .duration(3000)
-        .attr("y", function(d) { return height - y(d.value) - 0.5; })
-        .attr("height", function (d) { return y(d.value); });
+    // Delay the bars until the line is visible
+    window.setTimeout(function () {
+                          bars.transition()
+                              .duration(2000)
+                              .attr("y", function(d) { return height - y(d.value) - 0.5; })
+                              .attr("height", function (d) { return y(d.value); });
+                      }, barDelay);
 
     // the base line
     chart.append("line")
@@ -126,6 +131,6 @@ Chart.prototype.createChart = function (selector, data) {
         .style("stroke", "#000");
 
     chart.transition()
-        .duration(3000)
+        .duration(fadeInTime)
         .attr("opacity", 1);
 };
