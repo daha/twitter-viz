@@ -107,7 +107,7 @@ Chart.prototype.createChart = function (selector, data) {
     // the bars
     bars.enter()
         .append("rect")
-        .attr("x", function (d) { return x(d.key) - 0.5; })
+        .attr("x", function (d) { return x(d.key) - 0.5 - barWidth / 2; })
         .attr("y", function (d) { return height; })
         .attr("width", barWidth)
         .attr("height", 0);
