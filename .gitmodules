@@ -1,6 +1,6 @@
 [submodule "assets/javascript-bignum"]
 	path = assets/javascript-bignum
-	url = https://github.com/jtobey/javascript-bignum.git
+	url = git://github.com/jtobey/javascript-bignum
 [submodule "assets/crossfilter"]
 	path = assets/crossfilter
-	url = https://github.com/square/crossfilter.git
+	url = git://github.com/square/crossfilter
