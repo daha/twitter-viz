@@ -44,9 +44,9 @@ $(document).ready(function () {
         twitterUserTimeline = null;
 
     function hideProgressBar(duration) {
-        $('#progressbar').fadeOut(duration, function () {
-            $('.bar').width('0%');
-        });
+        $('#progressbar').fadeOut(200, function () {
+                                      $('.bar').width('0%');
+                                  });
     }
 
     function postError(msg) {
@@ -84,9 +84,45 @@ $(document).ready(function () {
         return false;
     }
 
+    function chart(data) {
+        var max = d3.max(data, function (d) { return d.value; });
+
+        var barWidth = 5,
+            w = barWidth * 144,
+            h = 200;
+
+        var x = d3.scale.linear()
+            .domain([0, 144])
+            .range([0, w]);
+
+        var y = d3.scale.linear()
+            .domain([0, max])
+            .rangeRound([0, h]);
+
+        var chart = d3.select("#tweet_lengths").append("svg")
+            .attr("class", "chart")
+            .attr("width", w)
+            .attr("height", h);
+        chart.selectAll("rect")
+            .data(data)
+            .enter().append("rect")
+            .attr("x", function(d) { return x(d.key) - 0.5; })
+            .attr("y", function(d) { return h - y(d.value) - 0.5; })
+            .attr("width", barWidth)
+            .attr("height", function(d) { return y(d.value); });
+    }
+
+    function visualize(tweets) {
+        var cf = crossfilter(tweets),
+            tweetsLength = cf.dimension(function (d) { return d.text.length; }),
+            tweetsLengths = tweetsLength.group();
+        chart(tweetsLengths.all());
+    }
+
     function complete(tweets) {
-        showTweets(tweets);
         hideProgressBar('slow');
+        showTweets(tweets);
+        visualize(twitterUserTimeline.tweets);
     }
 
     twitterUserTimeline = new TwitterUserTimeline();

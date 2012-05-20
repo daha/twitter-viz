@@ -12,6 +12,20 @@ top:15px;
 position:absolute;
 top:25px;
 }
+
+.chart {
+   font: 10px sans-serif;
+   background-color: white;
+   text-align: right;
+   padding: 3px;
+   margin: 1px;
+}
+
+.chart rect {
+   fill: steelblue;
+   stroke: white;
+}
+
 </style>
 
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"
@@ -20,6 +34,7 @@ top:25px;
 <script src="assets/javascript-bignum/biginteger.js" type="text/javascript"></script>
 <script src="assets/twitter-bootstrap-v2.0.3/js/bootstrap.js" type="text/javascript"></script>
 <script src="assets/crossfilter/crossfilter.js" type="text/javascript"></script>
+<script src="http://d3js.org/d3.v2.js" type="text/javascript"></script>
 <script src="src/TwitterUserTimeline.js" type="text/javascript"></script>
 <script src="src/twitterclient.js" type="text/javascript"></script>
 
@@ -38,7 +53,9 @@ top:25px;
 			<div id="user_image"></div>
 			<div id="user_description"></div>
 		</div>
-		<div id="tweets" class="span12"></div>
+                <div class="span12"></div>
+		<div id="tweets" class="span4"></div>
+                <div id="tweet_lengths" class="span8"></div>
 	</div>
 	<div id="alert_container"></div>
 	<div id="progressbar"
