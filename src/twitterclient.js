@@ -90,8 +90,6 @@ $(document).ready(function () {
             tweetsLength = cf.dimension(function (d) { return d.text.length; }),
             tweetsLengths = tweetsLength.group();
 
-        // Clear the div until I have figured out how to do it with d3.
-        $('#tweet_lengths').html('');
         chart.createChart("#tweet_lengths", tweetsLengths.all());
     }
 
@@ -120,6 +118,8 @@ $(document).ready(function () {
                         $('#user_image').html('<img src="' + response.profile_image_url + '">');
                         $('#user_description').html('<p>' + response.description + '</p>');
                         $('#tweets').html('');
+                        $('#tweet_lengths').html('');
+
                         twitterUserTimeline.fetchUserTweets(twitterUsername, response.statuses_count);
                     },
                     error: function (d, msg) {

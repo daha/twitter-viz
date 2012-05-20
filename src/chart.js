@@ -56,6 +56,7 @@ Chart.prototype.createChart = function (selector, data) {
             .attr("width", width + 50)
             .attr("height", height + 40)
             .append("g")
+            .attr("opacity", 0)
             .attr("transform", "translate(25,-15)"),
         bars =  chart.selectAll("rect")
             .data(data);
@@ -123,4 +124,8 @@ Chart.prototype.createChart = function (selector, data) {
         .attr("x1", 0)
         .attr("x2", width)
         .style("stroke", "#000");
+
+    chart.transition()
+        .duration(3000)
+        .attr("opacity", 1);
 };
