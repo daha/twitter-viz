@@ -58,6 +58,7 @@ Chart.prototype.createChart = function (selector, data) {
             .append("g")
             .attr("transform", "translate(25,-15)");
 
+    // x-axis
     chart.append("g").selectAll("line")
         .data(x.ticks(10))
         .enter().append("line")
@@ -65,15 +66,6 @@ Chart.prototype.createChart = function (selector, data) {
         .attr("x2", function (d) { return x(d) - 0.5; })
         .attr("y1", height - 0.5)
         .attr("y2", height - 0.5 + 5)
-        .style("stroke", "#ccc");
-
-    chart.append("g").selectAll("line")
-        .data(y.ticks(5))
-        .enter().append("line")
-        .attr("x1", 0)
-        .attr("x2", width)
-        .attr("y1", function (d) { return height - y(d) - 0.5; })
-        .attr("y2", function (d) { return height - y(d) - 0.5; })
         .style("stroke", "#ccc");
 
     chart.selectAll(".rule_x")
@@ -87,6 +79,16 @@ Chart.prototype.createChart = function (selector, data) {
         .attr("dominant-baseline", "text-before-edge")
         .text(String);
 
+    // y-axis
+    chart.append("g").selectAll("line")
+        .data(y.ticks(5))
+        .enter().append("line")
+        .attr("x1", 0)
+        .attr("x2", width)
+        .attr("y1", function (d) { return height - y(d) - 0.5; })
+        .attr("y2", function (d) { return height - y(d) - 0.5; })
+        .style("stroke", "#ccc");
+
     chart.selectAll(".rule_y")
         .data(y.ticks(5))
         .enter().append("text")
@@ -99,6 +101,7 @@ Chart.prototype.createChart = function (selector, data) {
         .attr("dominant-baseline", "central")
         .text(String);
 
+    // the bars
     chart.selectAll("rect")
         .data(data)
         .enter().append("rect")
@@ -107,6 +110,7 @@ Chart.prototype.createChart = function (selector, data) {
         .attr("width", barWidth)
         .attr("height", function (d) { return y(d.value); });
 
+    // the base line
     chart.append("line")
         .attr("y1", height - 0.5)
         .attr("y2", height - 0.5)
